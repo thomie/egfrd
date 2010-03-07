@@ -594,9 +594,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
             self.addSingleEvent(single)
             return
         
-        if single.dt != 0.0:
-            # Propagate this particle to the exit point on the shell.
-            self.propagateSingle(single)
+        self.propagateSingle(single)
 
         singlepos = single.shell.position
 
