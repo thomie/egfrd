@@ -277,7 +277,9 @@ class SphericalPair(Pair):
     def drawNewCoM(self, dt, eventType):
         gf = self.com_greens_function()
         r_R = draw_displacement_wrapper(gf, dt, eventType, self.a_R)
-        return self.CoM + randomVector(r_R)
+        displacement_R_S = [r_R, myrandom.uniform() * Pi, 
+                            myrandom.uniform() * 2 * Pi]
+        return self.CoM + sphericalToCartesian(displacement_R_S)
 
     def drawNewIV(self, dt, r0, old_iv, eventType): 
         gf = self.choosePairGreensFunction(r0, dt)
