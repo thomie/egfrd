@@ -711,11 +711,6 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         pos1 = particle1[1].position
         pos2 = particle2[1].position
         
-        if pair.eventType == EventType.IV_EVENT:
-            # Draw actual pair event for iv at very last minute.
-            r0 = self.distance(pos1, pos2)
-            pair.eventType = pair.draw_iv_event_type(r0)
-
         self.pair_steps[pair.eventType] += 1
 
         if __debug__:
@@ -1135,6 +1130,8 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 
         pair.dt, pair.eventType, pair.reactingsingle = \
             pair.determineNextEvent(r0)
+        if pair.eventType == EventType.IV_EVENT:
+            pair.eventType = pair.draw_iv_event_type(pair.dt, r0)
 
         assert pair.dt >= 0
 

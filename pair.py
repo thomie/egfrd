@@ -161,10 +161,6 @@ class Pair( object ):
         if dt_com < dt_iv:
             return dt_com, EventType.COM_ESCAPE, None
         else:
-            # Note: we are not calling pair.draw_iv_event_type yet, but 
-            # postpone it to the very last minute (when this event is executed 
-            # in firePair). So IV_EVENT can still be a iv event or a iv 
-            # reaction.
             return dt_iv, EventType.IV_EVENT, None
 
     def draw_single_reaction_time_tuple( self ):
@@ -185,9 +181,9 @@ class Pair( object ):
         return min(self.draw_com_escape_or_iv_event_time_tuple(r0), 
                    self.draw_single_reaction_time_tuple()) 
 
-    def draw_iv_event_type(self, r0):
+    def draw_iv_event_type(self, dt, r0):
         gf = self.iv_greens_function()
-        return draw_eventtype_wrapper(gf, self.dt, r0)
+        return draw_eventtype_wrapper(gf, dt, r0)
 
     def drawNewPositions(self, dt, r0, old_iv, eventType):
         """Calculate new positions of the pair particles using a new 
