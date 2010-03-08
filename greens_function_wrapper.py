@@ -91,9 +91,7 @@ def draw_displacement_iv_wrapper(gf, r0, dt, eventType, a, sigma):
                             '%s, rnd = %g, r = %g, r0 = %g, dt = %g' %
                             (str(e), rnd, r, r0, dt))#, gf.dump()))
 
-        # Heads up. For cylinders theta should be between [-pi, pi]. For 
-        # spheres it doesn't matter.
-        return myrandom.choice(-1, 1) * theta
+        return theta
 
     r = draw_displacement_wrapper(gf, dt, eventType, a, r0, sigma)
     theta = draw_theta_wrapper(gf, r, r0, dt)
