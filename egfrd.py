@@ -1412,6 +1412,13 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         # 2 escaping through a_R.
         elif pair.eventType == 2:
 
+            # calculate new R
+            displacement_R_S = [ pair.a_R, myrandom.uniform() * Pi, 
+                                 myrandom.uniform() * 2 * Pi ]
+            displacement_R = sphericalToCartesian( displacement_R_S )
+            
+            newCoM = oldCoM + displacement_R
+                
             # calculate new r
             r = pair.drawR_pair( r0, pair.dt, pair.a_r )
             if __debug__:
@@ -1423,13 +1430,6 @@ class EGFRDSimulator( ParticleSimulatorBase ):
             phi_r = myrandom.uniform() * 2*Pi
             newInterParticleS = numpy.array( [ r, theta_r, phi_r ] )
             newInterParticle = sphericalToCartesian( newInterParticleS )
-                
-            # calculate new R
-            displacement_R_S = [ pair.a_R, myrandom.uniform() * Pi, 
-                                 myrandom.uniform() * 2 * Pi ]
-            displacement_R = sphericalToCartesian( displacement_R_S )
-            
-            newCoM = oldCoM + displacement_R
                 
             newpos1, newpos2 = self.calculatePairPos(pair, newCoM, 
                                                      newInterParticle,
