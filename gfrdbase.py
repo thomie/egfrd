@@ -99,17 +99,6 @@ class ReactionRuleCache(object):
         self.k = k
 
 
-class DummySpecies(object):
-    """This is needed internally during initialization for the virtual product 
-    of a decay or surface absorption reaction.
-
-    For alternative user interface.
-    """
-    def __init__(self, surface):
-        self.radius = 0
-        self.surface = surface
-
-
 class Species(object):
     """For alternative user interface.
 
@@ -126,6 +115,7 @@ class ParticleModel(_gfrd.Model):
         _gfrd.Model.__init__(self)
 
         self.surface_list = {}
+        self.interactionRuleMap = {}
 
         # Particles of a Species whose surface is not specified will be added 
         # to the world. Dimensions don't matter, except for visualization.
@@ -158,6 +148,7 @@ class ParticleModel(_gfrd.Model):
                         if float(reaction_rule['k']) == 0.0:
                             nr.remove_reaction_rule(reaction_rule)
 
+        # Reactions.
         for species1 in self.species_types:
             for species2 in self.species_types:
                 gen = nr.query_reaction_rule(species1, species2)
@@ -165,6 +156,16 @@ class ParticleModel(_gfrd.Model):
                     rr = _gfrd.ReactionRule([species1, species2], [])
                     rr['k'] = '0.0'
                     nr.add_reaction_rule(rr)
+
+        # Interactions.
+        for species in self.species_types:
+            for surface in self.surfaceList.iterkeys():
+                try:
+                    self.interactionRuleMap[(species, surface)]
+                except:
+                    ir = _gfrd.ReactionRule([species], [])
+                    ir['k'] = '0.0'
+                    self.interactionRuleMap[(species, surface)] = ir
 
     def add_planar_surface(self, name, origin, vector_x, vector_y, Lx, Ly, Lz=0):
         """Add a planar surface.
@@ -309,8 +310,8 @@ class ParticleModel(_gfrd.Model):
 
             if species == 0:
                 # This is the virtual product of a decay or surface absorption 
-                # reaction.
-                species = DummySpecies(surface)
+                # reaction. DummySpeciesType.
+                return {'surface': surface}
 
             # Note: see add_species for how name is constructed. 
             name = '(' + species.name + ',' + str(surface) + ')'
@@ -328,10 +329,66 @@ class ParticleModel(_gfrd.Model):
         reactants = map(self.get_species_type, reactants)
         products  = map(self.get_species_type, products)
 
+        # Check for interactions.
+        if len(products) == 1:
+            reactantSurface = reactants[0]['surface']
+            productSurface = products[0]['surface']
+
+            if(reactantSurface == self.defaultSurface.name and
+               productSurface != self.defaultSurface.name):
+                # Remove DummySpeciesType from products list. Were needed for 
+                # surface absorption reaction.
+                products = [product for product in products if
+                            isinstance(product, _gfrd.SpeciesType)]
+
+                ir = _gfrd.ReactionRule(reactants, products)
+                ir['k'] = '%.16g' % k
+                # Surface binding is not a Poisson process, so this reaction 
+                # rule should not be added to the reaction list but to the 
+                # interaction list.
+                self.interactionRuleMap[(reactants[0], productSurface)] = ir
+                return
+
         rr = _gfrd.ReactionRule(reactants, products)
         rr['k'] = '%.16g' % k
         self.network_rules.add_reaction_rule(rr)
         return rr
+
+    def isSurfaceBindingReactionRule(self, rr):
+        # Since a surface a surface absorption reaction doesn't have a product 
+        # species we can not check for the productSurface as we do for 
+        # isSurfaceUnbindingReactionRule etc.
+        # This check always works, but don't call it before the interaction is 
+        # added to the interactionRuleMap.
+        return any([rr == ir for ir in self.interactionRuleMap.values()])
+
+    def isSurfaceUnbindingReactionRule(self, rr):
+        reactantSurface = rr.reactants[0].surface
+        productSurface = rr.products[0].surface
+
+        return (reactantSurface != self.defaultSurface and
+                productSurface == self.defaultSurface)
+
+    def isDirectSurfaceBindingReactionRule(self, rr):
+        reactantSurface1 = rr.reactants[0].surface
+        reactantSurface2 = rr.reactants[1].surface
+        productSurface = rr.products[0].surface
+
+        return xor((reactantSurface1 == self.defaultSurface and
+                    reactantSurface2 != self.defaultSurface and
+                    reactantSurafce2 == productSurface),
+                  ((reactantSurface2 == self.defaultSurface and
+                    reactantSurface1 != self.defaultSurface and
+                    reactantSurface1 == productSurface)))
+
+    def isDirectSurfaceUnbindingReactionRule(self, rr):
+        reactantSurface = rr.reactants[0].surface
+        productSurface1 = rr.products[0].surface
+        productSurface2 = rr.products[1].surface
+
+        return(reactantSurface != self.defaultSurface and
+               xor(productSurface1 == self.defaultSurface,
+                   productSurface2 == self.defaultSurface))
 
 
 def create_unimolecular_reaction_rule(s1, p1, k):
@@ -535,6 +592,14 @@ class ParticleSimulatorBase(object):
                                    (name1, name2, retval))
         return retval
 
+    def getInteractionRule(self, species, surface):
+        # Todo. This is a mess.
+        ir = self.model.interactionRuleMap.get((species, surface))
+        return ReactionRuleCache(
+                   ir,  
+                   [self.world.get_species(sid) for sid in products],
+                   k)
+    
     def get_species(self):
         return self.world.species
 
@@ -679,6 +744,7 @@ class ParticleSimulatorBase(object):
     def dump_reaction_rules(self):
         reaction_rules_1 = []
         reaction_rules_2 = []
+        interactions = []
         reflective_reaction_rules = []
         for si1 in self.world.species:
             for reaction_rule_cache in self.get_reaction_rule1(si1.id):
@@ -692,6 +758,14 @@ class ParticleSimulatorBase(object):
                     else:
                         reflective_reaction_rules.append(string)
 
+        # Interactions.
+        interaction_rules_string = ''
+        for (species, surface), interaction in \
+            self.model.interactionRuleMap.iteritems():
+            # Ignore reflecting.
+            if float(interaction['k']) > 0:
+                interaction_rules_string += self.model.dump_reaction_rule(interaction) + " (" + str(surface) + ")" + '\n'
+
         reaction_rules_1 = uniq(reaction_rules_1)
         reaction_rules_1.sort()
         reaction_rules_2 = uniq(reaction_rules_2)
@@ -701,6 +775,8 @@ class ParticleSimulatorBase(object):
 
         return('\nMonomolecular reaction rules:\n' + ''.join(reaction_rules_1) +
                '\nBimolecular reaction rules:\n' + ''.join(reaction_rules_2) +
+               '\nInteractions between a particle and a surface:\n' + 
+               interaction_rules_string +
                '\nReflective bimolecular reaction rules:\n' +
                ''.join(reflective_reaction_rules))
 
