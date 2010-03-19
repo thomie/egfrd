@@ -1,0 +1,59 @@
+
+t = 0.0169058
+steps = 15000 
+	Single:	12701	(escape: 10673, reaction: 2028)
+	Pair:	2262	(escape r: 86, R: 172, reaction pair: 1988, single: 16)
+	Multi:	37	(escape: 1, reaction: 3)
+total reactions = 4035
+rejected moves = 0
+
+Tue Mar 16 01:15:29 2010    fooprof
+
+         1176150 function calls (1176146 primitive calls) in 3.036 CPU seconds
+
+   Ordered by: internal time
+   List reduced from 186 to 40 due to restriction <40>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+    10673 0.26854700 0.00002516 0.26979100 0.00002528 /home/thomas/code/epdp/egfrd.py:1289(get_intruders)
+    12701 0.15502500 0.00001221 2.55078100 0.00020083 /home/thomas/code/epdp/egfrd.py:560(fireSingle)
+    15004 0.11536800 0.00000769 0.35257300 0.00002350 /home/thomas/code/epdp/single.py:165(drawNewPosition)
+    12968 0.11097500 0.00000856 0.12209100 0.00000941 /home/thomas/code/epdp/greens_function_wrapper.py:10(draw_time_wrapper)
+    23436 0.09633000 0.00000411 0.12572100 0.00000536 /home/thomas/code/epdp/single.py:192(greens_function)
+    15000 0.09356900 0.00000624 3.01685000 0.00020112 /home/thomas/code/epdp/egfrd.py:170(step)
+    30615 0.08960900 0.00000293 0.11201400 0.00000366 /home/thomas/code/epdp/egfrd.py:319(moveShell)
+    17542 0.08550900 0.00000487 0.09166300 0.00000523 /home/thomas/code/epdp/greens_function_wrapper.py:41(draw_displacement_wrapper)
+     2364 0.07815200 0.00003306 0.07815200 0.00003306 /home/thomas/code/epdp/egfrd.py:1322(getClosestObj)
+    21958 0.07480300 0.00000341 0.22107100 0.00001007 /home/thomas/code/epdp/egfrd.py:281(moveSingleShell)
+     2044 0.07408700 0.00003625 0.37297000 0.00018247 /home/thomas/code/epdp/egfrd.py:413(fireSingleReaction)
+     2303 0.07037700 0.00003056 0.44827200 0.00019465 /home/thomas/code/epdp/egfrd.py:992(formPair)
+    15004 0.06474700 0.00000432 0.69353000 0.00004622 /home/thomas/code/epdp/egfrd.py:524(propagateSingle)
+    82906 0.06464200 0.00000078 0.06464200 0.00000078 /home/thomas/code/epdp/myrandom.py:19(uniform)
+    28339 0.06388700 0.00000225 0.06388700 0.00000225 /home/thomas/code/epdp/single.py:198(createNewShell)
+     8432 0.06169300 0.00000732 0.44412000 0.00005267 /home/thomas/code/epdp/egfrd.py:681(updateSingle)
+    15554 0.06051700 0.00000389 0.09176600 0.00000590 /home/thomas/code/epdp/egfrd.py:297(moveSingleParticle)
+     6381 0.05604600 0.00000878 0.16580800 0.00002598 /home/thomas/code/epdp/egfrd.py:215(createSingle)
+     8331 0.05351500 0.00000642 0.07610300 0.00000913 /home/thomas/code/epdp/egfrd.py:658(calculateSingleShellSize)
+     5671 0.05294300 0.00000934 0.05294300 0.00000934 {numpy.core.multiarray.array}
+    17048 0.05142200 0.00000302 0.08741600 0.00000513 /home/thomas/code/epdp/utils.py:140(randomVector)
+    24008 0.04847500 0.00000202 0.04847500 0.00000202 /home/thomas/code/epdp/gfrdbase.py:479(applyBoundary)
+    47327 0.04113800 0.00000087 0.04783300 0.00000101 {min}
+      275 0.03711800 0.00013497 0.03739200 0.00013597 /home/thomas/code/epdp/greens_function_wrapper.py:79(draw_theta_wrapper)
+    15316 0.03444500 0.00000225 0.06945500 0.00000453 /home/thomas/code/epdp/egfrd.py:327(addSingleEvent)
+    15616 0.03133500 0.00000201 0.03133500 0.00000201 /home/thomas/code/epdp/gfrdbase.py:641(moveParticle)
+     2262 0.03128500 0.00001383 0.33150000 0.00014655 /home/thomas/code/epdp/egfrd.py:704(firePair)
+     2052 0.03098300 0.00001510 0.06264200 0.00003053 /home/thomas/code/epdp/egfrd.py:1267(getNeighborsWithinRadiusNoSort)
+    38440 0.02953700 0.00000077 0.02953700 0.00000077 /home/thomas/code/epdp/single.py:159(get_mobility_radius)
+    39474 0.02801800 0.00000071 0.02801800 0.00000071 /home/thomas/code/epdp/egfrd.py:307(get_container)
+     2268 0.02730600 0.00001204 0.08152600 0.00003595 /home/thomas/code/epdp/egfrd.py:236(createPair)
+    19752 0.02703400 0.00000137 0.02703400 0.00000137 /home/thomas/code/epdp/gfrdbase.py:565(distance)
+     8855 0.02696800 0.00000305 0.03258200 0.00000368 /home/thomas/code/epdp/egfrd.py:313(removeDomain)
+    17621 0.02690200 0.00000153 0.02690200 0.00000153 /home/thomas/code/epdp/egfrd.py:324(addEvent)
+     4612 0.02680400 0.00000581 0.03634800 0.00000788 /home/thomas/code/epdp/pair.py:229(iv_greens_function)
+     2044 0.02626000 0.00001285 0.02626000 0.00001285 {method 'accumulate' of 'numpy.ufunc' objects}
+     6381 0.02577000 0.00000404 0.04526400 0.00000709 /home/thomas/code/epdp/single.py:13(__init__)
+    15000 0.02462900 0.00000164 2.91227300 0.00019415 /home/thomas/code/epdp/egfrd.py:46(__call__)
+    59203 0.02434300 0.00000041 0.02434300 0.00000041 /home/thomas/code/epdp/single.py:41(getD)
+     2263 0.02145800 0.00000948 0.09630100 0.00004255 /home/thomas/code/epdp/pair.py:277(drawNewCoM)
+
+

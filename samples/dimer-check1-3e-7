@@ -1,0 +1,59 @@
+
+t = 6.19836e-06
+steps = 15000 
+	Single:	2586	(escape: 2583, reaction: 3)
+	Pair:	0	(escape r: 0, R: 0, reaction pair: 0, single: 0)
+	Multi:	12414	(escape: 382, reaction: 7)
+total reactions = 10
+rejected moves = 0
+
+Tue Mar 16 01:12:11 2010    fooprof
+
+         778083 function calls (777693 primitive calls) in 2.258 CPU seconds
+
+   Ordered by: internal time
+   List reduced from 139 to 40 due to restriction <40>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+    12414 0.47706800 0.00003843 1.30591400 0.00010520 /home/thomas/code/epdp-before/bd.py:111(propagate)
+    24825 0.21574900 0.00000869 0.21574900 0.00000869 /home/thomas/code/epdp-before/egfrd.py:99(getParticlesWithinRadiusNoSort)
+    24109 0.12470700 0.00000517 0.12470700 0.00000517 /home/thomas/code/epdp-before/egfrd.py:88(withinShell)
+    15000 0.11616800 0.00000774 2.23874000 0.00014925 /home/thomas/code/epdp-before/egfrd.py:622(step)
+    24825 0.09355800 0.00000377 0.10313700 0.00000415 /home/thomas/code/epdp-before/gfrdbase.py:91(drawR_free)
+     2586 0.06883400 0.00002662 0.61286300 0.00023699 /home/thomas/code/epdp-before/egfrd.py:1119(fireSingle)
+    24102 0.06123100 0.00000254 0.08909200 0.00000370 /home/thomas/code/epdp-before/egfrd.py:50(updateParticle)
+    12414 0.06082600 0.00000490 0.07110400 0.00000573 /home/thomas/code/epdp-before/myrandom.py:30(shuffle)
+    24825 0.04986900 0.00000201 0.08810400 0.00000355 /home/thomas/code/epdp-before/bd.py:186(attemptSingleReactions)
+      390 0.04865600 0.00012476 0.04986700 0.00012786 /home/thomas/code/epdp-before/egfrd.py:39(__init__)
+    30159 0.04280800 0.00000142 0.04280800 0.00000142 /home/thomas/code/epdp-before/utils.py:146(apply_boundary)
+    24109 0.04193400 0.00000174 0.18058400 0.00000749 /home/thomas/code/epdp-before/egfrd.py:78(clearVolume)
+    12415 0.03708500 0.00000299 0.06926200 0.00000558 /home/thomas/code/epdp-before/egfrd.py:922(addMultiEvent)
+    28056 0.03416400 0.00000122 0.03416400 0.00000122 /home/thomas/code/epdp-before/gfrdbase.py:366(moveParticle)
+    35620 0.03203200 0.00000090 0.03203200 0.00000090 /home/thomas/code/epdp-before/myrandom.py:13(uniform)
+     3171 0.03199500 0.00001009 0.13722100 0.00004327 /home/thomas/code/epdp-before/egfrd.py:1246(updateSingle)
+    15000 0.02932600 0.00000196 2.11636300 0.00014109 /home/thomas/code/epdp-before/egfrd.py:31(__call__)
+     3954 0.02918400 0.00000738 0.04762200 0.00001204 /home/thomas/code/epdp-before/egfrd.py:878(moveSingle)
+     3171 0.02842200 0.00000896 0.03141200 0.00000991 /home/thomas/code/epdp-before/egfrd.py:210(drawEscapeTime)
+    12414 0.02488500 0.00000200 1.47417400 0.00011875 /home/thomas/code/epdp-before/egfrd.py:1477(fireMulti)
+     1955 0.02487800 0.00001273 0.02487800 0.00001273 /home/thomas/code/epdp-before/egfrd.py:1952(getClosestObj)
+    12414 0.02477000 0.00000200 1.33068400 0.00010719 /home/thomas/code/epdp-before/bd.py:103(step)
+    15685 0.02330800 0.00000149 0.02330800 0.00000149 /home/thomas/code/epdp-before/egfrd.py:901(addEvent)
+     2586 0.02185000 0.00000845 0.07757100 0.00003000 /home/thomas/code/epdp-before/egfrd.py:1096(propagateSingle)
+     1758 0.02134200 0.00001214 0.03414500 0.00001942 /home/thomas/code/epdp-before/egfrd.py:1965(objDistance)
+    30159 0.02113200 0.00000070 0.06394000 0.00000212 /home/thomas/code/epdp-before/gfrdbase.py:248(applyBoundary)
+    12414 0.01980100 0.00000160 1.35048500 0.00010879 /home/thomas/code/epdp-before/egfrd.py:57(step)
+        1 0.01944400 0.01944400 2.25818400 2.25818400 epdp-before/dimer.py:55(profrun)
+     3168 0.01926600 0.00000608 0.02739000 0.00000865 /home/thomas/code/epdp-before/egfrd.py:1223(calculateSingleShellSize)
+    25902 0.01896500 0.00000073 0.01896700 0.00000073 /home/thomas/code/epdp-before/gfrdbase.py:251(getReactionRule1)
+     1371 0.01846500 0.00001347 0.02026600 0.00001478 /home/thomas/code/epdp-before/egfrd.py:188(drawR)
+     8202 0.01802000 0.00000220 0.01802000 0.00000220 /home/thomas/code/epdp-before/egfrd.py:898(moveShell)
+     1368 0.01790300 0.00001309 0.06929300 0.00005065 /home/thomas/code/epdp-before/egfrd.py:1526(burstSingle)
+     1758 0.01520500 0.00000865 0.01520500 0.00000865 {numpy.core.multiarray.array}
+    24102 0.01480300 0.00000061 0.10389500 0.00000431 /home/thomas/code/epdp-before/egfrd.py:75(moveParticle)
+     1172 0.01464200 0.00001249 0.01473900 0.00001258 /home/thomas/code/epdp-before/egfrd.py:893(removeDomain)
+     3954 0.01447800 0.00000366 0.02298900 0.00000581 /home/thomas/code/epdp-before/utils.py:94(randomVector)
+     2583 0.01352700 0.00000524 0.01352700 0.00000524 /home/thomas/code/epdp-before/egfrd.py:1931(getNeighbors)
+    15685 0.01283400 0.00000082 0.01283400 0.00000082 /home/thomas/code/epdp-before/egfrd.py:27(__init__)
+    14392 0.01275600 0.00000089 0.01275600 0.00000089 {min}
+
+
