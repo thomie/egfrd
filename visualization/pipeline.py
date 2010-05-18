@@ -1,8 +1,4 @@
 # Settings
-base_directory = '/storage1/miedema/code/'
-paraview_scripts_directory = base_directory + '/epdp/paraview/'
-simulation_data_directory = base_directory + '/simulations/paraview-test/run/'
-simulation_data_directory = base_directory + '/egfrd/todo/run/'
 
 READERS = True
 PARTICLES = True
