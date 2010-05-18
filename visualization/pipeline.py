@@ -9,11 +9,28 @@ SURFACES = True
 PARTICLE_SCALE_FACTOR = 1
 RESOLUTION = 18
 
-
-
 def clear_pipeline():
-    for source in GetSources().itervalues():
-        Delete(source)
+    def name(proxy):
+        return (type(proxy)).__name__
+
+    def compare_glyphs_first(x,y):
+        if name(x)[-5:] == 'Glyph':
+            return -1
+        if name(y)[-5:] == 'Glyph':
+            return 1
+        return cmp(x,y)
+
+    for proxy in sorted(GetSources().itervalues(), compare_glyphs_first):
+        # Hack to avoid 'Connection sink not found in the pipeline model' in 
+        # Paraview 3.6.
+        if hasattr(proxy, "Input") and proxy.Input:
+            if isinstance(proxy.Input, servermanager.Proxy):
+                proxy.Input = None
+            else:
+                proxy.Input[0] = None
+
+        Delete(proxy)
+
 clear_pipeline()
 
 
@@ -26,11 +43,29 @@ def __MakeBlueToRedLT(min, max):
 '''
 
 
-def rename(object, name):
+def rename(proxy, name):
+    # Hack to avoid 'Connection sink not found in the pipeline model' in 
+    # Paraview 3.6.
+    if hasattr(proxy, "Input") and proxy.Input:
+        if isinstance(proxy.Input, servermanager.Proxy):
+            input = proxy.Input
+        else:
+            input = proxy.Input[0]
+        proxy.Input = None
+    else:
+        input = None
+
     # No need to unregister when using servermanager.sources/filters...(?)
-    servermanager.UnRegister(object)
-    servermanager.Register(object, registrationName=name)
-    pass
+    servermanager.UnRegister(proxy)
+    servermanager.Register(proxy, registrationName=name)
+
+    # Reset input.
+    if input != None:
+        if isinstance(input, servermanager.Proxy):
+            proxy.Input = input
+        else:
+            proxy.Input[0] = input
+
 
 def addPVDReader(file, name):
     #glyph = servermanager.sources.PVDReader(FileName=file)
