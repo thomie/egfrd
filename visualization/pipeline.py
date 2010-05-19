@@ -9,6 +9,9 @@ SURFACES = True
 PARTICLE_SCALE_FACTOR = 1
 RESOLUTION = 18
 
+from paraview.simple import *  # Should be listed first.
+#from paraview.servermanager import *
+
 def clear_pipeline():
     def name(proxy):
         return (type(proxy)).__name__
@@ -68,26 +71,22 @@ def rename(proxy, name):
 
 
 def addPVDReader(file, name):
-    #glyph = servermanager.sources.PVDReader(FileName=file)
     reader = PVDReader(FileName=file)
     rename(reader, name)
     return reader
 
 def add_glyph(data, type, name):
-    #glyph = servermanager.filters.Glyph(Input=data, GlyphType=type)
     glyph = Glyph(data, GlyphType=type)
     rename(glyph, name)
     return glyph
 
 def add_extract_block(data, indices, name):
-    #block = servermanager.filters.ExtractBlock(Input=data, BlockIndices=indices)
     block = ExtractBlock(data, BlockIndices=indices)
     rename(block, name)
     block.UpdatePipeline(); # Otherwise SetScaleFactor doesn't work. Otherwise TensorGlyph error.
     return block
 
 def add_tensor_glyph(data, type, name):
-    #tensor_glyph = servermanager.filters.TensorGlyph(Input=data, GlyphType=type)
     tensor_glyph = TensorGlyph(data, GlyphType=type)
     rename(tensor_glyph, name)
     return tensor_glyph
@@ -201,58 +200,5 @@ renderer = Render()
 renderer.Background = [0,0,0] # Black.
 ResetCamera()
 
-
-
-
-# Todo.
-#display.ColorArrayName = 'colors'
-#
-# http://www.paraview.org/pipermail/paraview/2009-March/011267.html
-#pdi = self.GetInput()
-#pdata = pdi.GetPointData()
-#pdata.GetScalars().SetName('Scalars')
-#pdata.GetNormals().SetName('Normals')
-#pdata.GetTensors().SetName('Tensors')
-#pdo = self.GetOutput()
-#pdo.ShallowCopy(pdi)
-#
-# Doesn't work.
-#
-#programmable_filter = ProgrammableFilter()
-#programmable_filter.Script = 'print self.GetInput().GetBlock[0]'
-#display = GetDisplayProperties(programmable_filter)
-#display.SelectionVisibility = 1
-#
-#programmable_filter2 = ProgrammableFilter()
-#programmable_filter2.Script = 'print self.GetInput().GetBlock[0]'
-#display = GetDisplayProperties(programmable_filter2)
-#display.SelectionVisibility = 1
-#
-# The problem is that cylinder doesn't output the tensor/scalar/vector 
-# *information* anymore, not just the name is lost. And I can not find a way 
-# to set it.
-# The information can be found by setting a ProgrammableFilter after cylinders 
-# (ExtractBlock), containing print self.GetInput().GetBlock[0] (maybe loop 
-# over this later), and you see it at Child 0 -> PointData -> Number of 
-# Arrays.
-#
-# I also can not access that information from this script yet.
-#
-# See: test-colors.pvsm. Sphere glyph and the programmable filter after it 
-# both have radii, colors, Normals. Cylinder glyph and the programmable filter 
-# after it have none of these.
-
-
-
 display = GetDisplayProperties(cylinder)
-#rep = Get_Representation()
-#servermanager
 
-
-# Apparently no need to click 'Apply' for cylinder tensor glyphs, but needed 
-# for sphere glyphs and box tensor glyphs.
-
-# Don't do this:
-#display.LookupTable.Initialize()
-# Doesn't work:
-#display.SelectionVisibility = 0
