@@ -201,14 +201,14 @@ class VTKLogger:
     def get_particle_data(self):
         particles, particle_color_list = [], []
 
-        for species_id, particle_id_set in self.sim.particle_pool.items():
-            for particle_id in particle_id_set:
+        for species_id in self.sim.world.species:
+            for particle_id in self.sim.world.get_particle_ids(species_id):
                 particle = self.sim.world.get_particle(particle_id)[1]
                 particles.append(particle)
                 try:
-                    color = self.color_dict[species_id.serial]
+                    color = self.color_dict[species_id.id]
                 except:
-                    color = species_id.serial 
+                    color = species_id.id
                 particle_color_list.append(color)
 
         if self.i == 0:
@@ -220,7 +220,7 @@ class VTKLogger:
             try:
                 max_color = max(self.color_dict.values())
             except:
-                max_color = species_id.serial 
+                max_color = species_id.id
             particle_color_list.append(max_color)
 
         return self.process_spheres(particles, particle_color_list)
@@ -292,16 +292,16 @@ class VTKLogger:
 
     def get_planar_surface_data(self):
         boxes = [surface.shape for surface
-                             in self.sim.model.surface_list.itervalues()
-                             if isinstance(surface.shape, _box)]
+                               in self.sim.model.surface_list.itervalues()
+                               if isinstance(surface.shape, Box)]
     
         return self.process_boxes(boxes)
 
     def get_cylindrical_surface_data(self):
         # Todo. Make DNA blink when reaction takes place.
         cylinders = [surface for surface
-                           in self.sim.model.surface_list.itervalues()
-                           if isinstance(surface, _cylinder)]
+                             in self.sim.model.surface_list.itervalues()
+                             if isinstance(surface.shape, Cylinder)]
         return self.process_cylinders(cylinders)
 
     def process_spheres(self, spheres=[], color_list=[]):
@@ -332,11 +332,17 @@ class VTKLogger:
             color_list = [0]
 
         for cylinder in cylinders:
-            radius = cylinder.radius
             # Todo.
-            orientation = cylinder.unit_z
-            position = cylinder.position
-            size = cylinder.size
+            try:
+                position = cylinder.position
+                radius = cylinder.radius
+                orientation = cylinder.unit_z
+                size = cylinder.size
+            except:
+                position = cylinder.shape.position
+                radius = cylinder.shape.radius
+                orientation = cylinder.shape.unit_z
+                size = cylinder.shape.size
 
             # Construct tensor. _use tensor glyph plugin from:
             # http://www.paraview.org/pipermail/paraview/2009-_march/011256.html
@@ -397,12 +403,12 @@ class VTKLogger:
     
 
     def get_dummy_sphere(self):
-        return _sphere([0, 0, 0], 1e-20)
+        return Sphere([0, 0, 0], 1e-20)
 
     def get_dummy_cylinder(self):
-        return _cylinder([0, 0, 0], 1e-20, [0, 0, 1], 1e-20)
+        return Cylinder([0, 0, 0], 1e-20, [0, 0, 1], 1e-20)
 
     def get_dummy_box(self):
-        return _box([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], 
-                 1e-20, 1e-20, 1e-20)
+        return Box([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1],
+                   1e-20, 1e-20, 1e-20)
 
