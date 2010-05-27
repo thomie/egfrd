@@ -202,18 +202,20 @@ class VTKLogger:
     def get_particle_data(self):
         particles, particle_color_list = [], []
 
-        for species_id in self.sim.world.species:
-            for particle_id in self.sim.world.get_particle_ids(species_id):
+        for species in self.sim.world.species:
+            for particle_id in self.sim.world.get_particle_ids(species):
                 particle = self.sim.world.get_particle(particle_id)[1]
                 particles.append(particle)
                 try:
-                    color = self.color_dict[species_id.id]
+                    color = self.color_dict[species.id.serial]
                 except:
-                    color = species_id.id
+                    color = species.id.serial
                 particle_color_list.append(color)
 
+        species_id_serial_max = species.id.serial
+
         if self.i == 0:
-            # Add dummy particle with color 1 (species_id.serial starts at 1).
+            # Add dummy particle with color 1 (species.id.serial starts at 1).
             particles.append(self.get_dummy_sphere())
             particle_color_list.append(1)
             # Add dummy particle with color is highest species index.
@@ -221,7 +223,7 @@ class VTKLogger:
             try:
                 max_color = max(self.color_dict.values())
             except:
-                max_color = species_id.id
+                max_color = species_id_serial_max
             particle_color_list.append(max_color)
 
         return self.process_spheres(particles, particle_color_list)
