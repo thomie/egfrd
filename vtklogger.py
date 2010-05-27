@@ -7,6 +7,7 @@ import numpy
 from vtk_xml_serial_unstructured import *
 #from bd import BD_simulator
 from _gfrd import Sphere, Cylinder, Box
+from multi import Multi
 
 
 # Temporary.
@@ -264,7 +265,7 @@ class VTKLogger:
                 color = 0
 
             # Multi.
-            if len(object.shell_list) > 1:
+            if isinstance(type(object), Multi):
                 color = 3
 
             try:
@@ -292,7 +293,7 @@ class VTKLogger:
 
     def get_planar_surface_data(self):
         boxes = [surface.shape for surface
-                               in self.sim.model.surface_list.itervalues()
+                               in self.sim.world.structures
                                if isinstance(surface.shape, Box)]
     
         return self.process_boxes(boxes)
@@ -300,7 +301,7 @@ class VTKLogger:
     def get_cylindrical_surface_data(self):
         # Todo. Make DNA blink when reaction takes place.
         cylinders = [surface for surface
-                             in self.sim.model.surface_list.itervalues()
+                             in self.sim.world.structures
                              if isinstance(surface.shape, Cylinder)]
         return self.process_cylinders(cylinders)
 
