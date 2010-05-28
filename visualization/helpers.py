@@ -140,14 +140,8 @@ def Delete(proxy, version=6):
             else:
                 SetActiveView(None)
 
-    if version == 4 or version == 5:
-        # Paraview 3.4.
-        # Paraview 3.6 mimicking 3.4.
-        pass
-    else:
-        # Paraview 3.6.
-        if hasattr(proxy, "Input"):
-            proxy.Input = None
+    if hasattr(proxy, "Input"):
+        proxy.Input = None
     servermanager.UnRegister(proxy)
 
 

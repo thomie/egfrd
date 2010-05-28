@@ -1,39 +1,71 @@
 READERS   = False
 PARTICLES = False
-SHELLS    = False
+SPHERES    = False
+CYLINDERS = False
 HELIX     = False
 SURFACES  = False
 
 # Settings
 READERS   = True
 PARTICLES = True
-#SHELLS    = True
+SPHERES    = True
+#CYLINDERS = True
 #HELIX     = True
 #SURFACES  = True
+
 
 PARTICLE_SCALE_FACTOR = 4
 RESOLUTION = 18
 
-import sys
-sys.path.append(paraview_scripts_directory)
-import helpers
-
-import paraview
-
-from paraview import servermanager
 
 try:
+    import paraview
     paraview.compatibility
-    paraview.compatibility.minor = 4
+    paraview.compatibility.minor = 5
     if servermanager.ActiveConnection:
-        # 6: paraview 3.6.
-        # 5: as much as possible compatible with paraview 3.4.
-        version = 5
+        version = 6
     else:
         # Hack. I don't remember why this is needed.
         version = 4
 except:
     version = 4
+
+
+if version == 4:
+    # helpers.py
+    import sys
+    sys.path.append(paraview_scripts_directory)
+    import helpers
+    from paraview import servermanager
+else:
+    from paraview import simple
+
+
+if not servermanager.ActiveConnection:
+    if version == 4 or version == 5:
+        servermanager.Connect()
+    else:
+        simple.Connect()
+
+
+try:
+    views = servermanager.GetRenderViews()
+    if len(views) > 0:
+        print 'reuse render view'
+        rv = views[0]
+    else:
+        print 'new render view'
+        rv = servermanager.CreateRenderView()
+except KeyError:
+    rv = servermanager.CreateRenderView()
+
+
+# From simple.py.
+class _funcs_internals:
+    "Internal class."
+    first_render = True
+    view_counter = 0
+    rep_counter = 0
 
 
 def clear():
@@ -47,9 +79,18 @@ def clear():
             return 1
         return cmp(x,y)
 
-    for proxy in sorted(helpers.GetSources().itervalues(), 
-                        compare_glyphs_first):
-        helpers.Delete(proxy, version) # Delete in simple.py needs hack in 3.6.
+    if version == 4:
+        pxm = servermanager.ProxyManager()
+        for proxy in sorted(pxm.GetProxiesInGroup('sources').itervalues(),
+                            compare_glyphs_first):
+            helpers.Delete(proxy, version)
+    else:
+        for proxy in sorted(simple.GetSources().itervalues(), 
+                            compare_glyphs_first):
+            # Hack to avoid 'Connection sink not found in the pipeline model'.
+            if hasattr(proxy, "Input"):
+                proxy.Input = None
+            simple.Delete(proxy)
 
 
 def register(proxy, name):
@@ -64,7 +105,7 @@ def register(proxy, name):
     # No need to unregister when using servermanager.sources/filters.
     # Or: no need to register when using simple.Glyph() etc.
     #servermanager.UnRegister(proxy)
-    servermanager.Register(proxy, registrationName=name)
+    servermanager.Register(proxy) #, registrationName=name)
 
     '''
     # Reset input.
@@ -73,26 +114,111 @@ def register(proxy, name):
     '''
 
 
-def addPVDReader(file, name):
+def add_pvd_reader(file, name):
     reader = servermanager.sources.PVDReader(FileName=file)
     register(reader, name)
+    # Extra update.
+    reader.UpdatePipeline()
+    reader.UpdatePipelineInformation()
     return reader
+
 
 def add_extract_block(data, indices, name):
     block = servermanager.filters.ExtractBlock(Input=data, 
                                                BlockIndices=indices)
-    register(block, name)
-    # Otherwise SetScaleFactor doesn't work. Otherwise TensorGlyph error.
+
+    # This is needed otherwise SetScaleFactor and TensorGlyph don't work.
     block.UpdatePipeline();
+    block.UpdatePipelineInformation();
+
+    register(block, name)
     return block
+
+
+def add_sphere_glyph(input, resolution=None):
+    if version == 4:
+        source = servermanager.sources.SphereSource()
+        glyph = servermanager.filters.Glyph(Input=input, 
+                                               Source=source)
+
+        # Prevent "selected proxy value not in the list".
+        # http://www.paraview.org/pipermail/paraview/2008-March/007416.html
+        sourceProperty = glyph.GetProperty("Source")
+        domain = sourceProperty.GetDomain("proxy_list");
+        domain.AddProxy(source.SMProxy)
+
+        glyph.SetScaleMode = 0
+        glyph.SelectInputScalars = ['0', '0', '0', '0', 'radii']
+
+        if resolution != None:
+            glyph.ThetaResolution = resolution
+            glyph.PhiResolution = resolution
+    else:
+        glyph = servermanager.filters.Glyph(Input=input, 
+                                               GlyphType='Sphere')
+        glyph.ScaleMode = 'scalar'
+
+        if resolution != None:
+            glyph.GlyphType.ThetaResolution = resolution
+            glyph.GlyphType.PhiResolution = resolution
+
+    glyph.SetScaleFactor = 1
+
+    register(glyph, 'SphereGlyph')
+    return glyph
 
 
 def add_tensor_glyph(data, type, name):
     tensor_glyph = servermanager.filters.TensorGlyph(Input=data, 
                                                      GlyphType=type)
     #tensor_glyph = vtk.vtkTensorGlyph(data, GlyphType=type)
+
     register(tensor_glyph, name)
     return tensor_glyph
+
+
+def set_color(proxy, rep):
+    rep.ColorArrayName = 'colors'
+
+    if version == 4:
+        rep.ColorAttributeType = 0 # point data
+
+        # Adapted from MakeBlueToRedLT in simple.py.
+        def MakeBlueToRedLT(min, max):
+            lt = servermanager.rendering.PVLookupTable()
+            servermanager.Register(lt)
+
+            # Define RGB points. These are tuples of 4 values. First one is
+            # the scalar values, the other 3 the RGB values. 
+            rgbPoints = [min, 0, 0, 1, max, 1, 0, 0]
+            lt.RGBPoints = rgbPoints
+            lt.ColorSpace = "HSV"
+
+            return lt
+
+        pdi = proxy.GetDataInformation().GetPointDataInformation()
+        range = pdi.GetArrayInformation('colors').GetComponentRange(0)
+        lt = MakeBlueToRedLT(range[0], range[1])
+    else:
+        range = proxy.PointData.GetArray('colors').GetRange()
+        lt = simple.MakeBlueToRedLT(range[0], range[1])
+
+    rep.LookupTable = lt
+
+
+def show(proxy):
+    if version == 4:
+        # Adapted from Show in simple.py.
+        rep = servermanager.CreateRepresentation(proxy, rv)
+        servermanager.ProxyManager().RegisterProxy("representations", \
+          "my_representation%d" % _funcs_internals.rep_counter, rep)
+        _funcs_internals.rep_counter += 1
+    else:
+        rep = simple.Show(proxy)
+
+    rep.Visibility = 1
+    rep.SelectionVisibility = 1
+    return rep
 
 
 print 'clear pipeline'
@@ -100,153 +226,68 @@ clear()
 print 'build pipeline'
 
 
-if not servermanager.ActiveConnection:
-    if version == 4 or version == 5:
-        # Paraview 3.4.
-        # Paraview 3.6 mimicking 3.4.
-        servermanager.Connect()
-    else:
-        # Paraview 3.6.
-        helpers.Connect()
-
-try:
-    views = servermanager.GetRenderViews()
-    if len(views) > 0:
-        print 'reuse render view'
-        renModule = views[0]
-    else:
-        print 'new render view'
-        renModule = servermanager.CreateRenderView()
-except KeyError:
-    renModule = servermanager.CreateRenderView()
-
-
 if READERS:
-    # Read dynamic data.
-    files = addPVDReader(simulation_data_directory + '/files.pvd', 'DynamicDataReader')
+    files = add_pvd_reader(simulation_data_directory + '/files.pvd', 
+                           'DynamicDataReader')
 
-    # Read static data.
-    static = addPVDReader(simulation_data_directory + '/static.pvd', 'StaticDataReader')
+    static = add_pvd_reader(simulation_data_directory + '/static.pvd', 
+                            'StaticDataReader')
 
 
 if PARTICLES:
-    # Particles.
     particles = add_extract_block(files, [2], 'ParticleData')
-    if version == 4:
-        # Paraview 3.4.
-        source = servermanager.sources.SphereSource()
-        particle = servermanager.filters.Glyph(Input=particles, 
-                                               Source=source)
-        particle.SetScaleMode = 0
-    else:
-        # Paraview 3.6 mimicking 3.4.
-        # Paraview 3.6.
-        particle = servermanager.filters.Glyph(Input=particles, 
-                                               GlyphType='Sphere')
-        helpers.UpdatePipeline(proxy=particle);
-        particle.ScaleMode = 'scalar'
 
-    register(particle, 'SphereGlyph')
-
+    particle = add_sphere_glyph(particles)
     particle.SetScaleFactor = PARTICLE_SCALE_FACTOR
 
-    if version == 4 or version == 5:
-        # Paraview 3.4.
-        # Paraview 3.6 mimicking 3.4.
-        display = helpers.GetDisplayProperties(particle, renModule)
-        #display = helpers.Show(particle, version=version)
-        #display = servermanager.CreateRepresentation(particle, renModule)
-        #display.SelectionVisibility = 1
-    else:
-        # Paraview 3.6.
-        display = helpers.Show(particle)
+    rep = show(particle)
 
-    '''
-    display.ColorArrayName = 'colors'
-
-    # Todo.
-    #range = particle.PointData[0].GetRange()
-    #display.LookupTable = helpers.MakeBlueToRedLT(range[0], range[1])
-    '''
+    set_color(particle, rep)
 
 
-if SHELLS:
-    # Spheres.
+
+if SPHERES:
     spheres = add_extract_block(files, [4], 'SphereData')
-    if version == 4:
-        # Paraview 3.4.
-        source = servermanager.sources.SphereSource()
-        sphere = servermanager.filters.Glyph(Input=spheres, Source=source)
-        sphere.SetScaleMode = 0
-        sphere.ThetaResolution = RESOLUTION
-        sphere.PhiResolution = RESOLUTION
-    else:
-        # Paraview 3.6 mimicking 3.4.
-        # Paraview 3.6.
-        sphere = servermanager.filters.Glyph(Input=spheres, 
-                                             GlyphType='Sphere')
-        sphere.ScaleMode = 'scalar'
-        sphere.GlyphType.ThetaResolution = RESOLUTION
-        sphere.GlyphType.PhiResolution = RESOLUTION
 
-    register(sphere, 'SphereGlyph')
+    sphere = add_sphere_glyph(spheres, RESOLUTION)
 
-    sphere.SetScaleFactor = 1
+    rep = show(sphere)
 
-    if version == 4 or version == 5:
-        # Paraview 3.4.
-        # Paraview 3.6 mimicking 3.4.
-        display = servermanager.CreateRepresentation(sphere, renModule)
-        display.SelectionVisibility = 1
-    else:
-        # Paraview 3.6.
-        display = helpers.Show(sphere)
-        #display = helpers.GetDisplayProperties(sphere)
+    set_color(sphere, rep)
+    rep.Representation = 'Wireframe'
+    rep.Opacity = 0.5
 
-    display.ColorArrayName = 'colors'
-    display.Representation = 'Wireframe'
-    display.Opacity = 0.5
 
-    # Todo.
-    #range = sphere.PointData[0].GetRange()
-    #lookup_table = helpers.MakeBlueToRedLT(range[0], range[1])
-    #display.LookupTable = lookup_table
-
-    ''' Todo.
-    # Cylinders.
+if CYLINDERS:
     cylinders = add_extract_block(files, [6], 'CylinderData')
     cylinder = add_tensor_glyph(cylinders, 'Cylinder', 
                                 'CylinderTensorGlyph')
-    #helpers.Show(cylinder)
+    #simple.Show(cylinder)
     # Todo.
     #cylinder.GlyphType.Resolution = RESOLUTION
 
-    display = helpers.GetDisplayProperties(cylinder)
-    display.Representation = 'Wireframe'
-    display.Opacity = 1.0
+    rep = simple.GetDisplayProperties(cylinder)
+    rep.Representation = 'Wireframe'
+    rep.Opacity = 1.0
 
     # Todo.
     #range = cylinder.PointData[0].GetRange()
-    #display.LookupTable = helpers.MakeBlueToRedLT(range[0], range[1])
-    '''
+    #rep.LookupTable = simple.MakeBlueToRedLT(range[0], range[1])
 
 
 if HELIX:
     helix_file = open(paraview_scripts_directory + '/helix.py', 'r')
     if version == 4 or version == 5:
-        # Paraview 3.4.
-        # Paraview 3.6 mimicking 3.4.
         #helix = ProgrammableFilter()
         #helix.Script = helix_file.read()
         #servermanager.Register(helix) # Needed, or register.
         pass
     else:
-        # Paraview 3.6.
         # Todo. Scale it.
         helix = servermanager.sources.ProgrammableSource()
         helix.Script = helix_file.read()
         register(helix, 'Helix')
-        helpers.Show(helix)
+        simple.Show(helix)
 
 
 if SURFACES and version == 6:
@@ -256,22 +297,22 @@ if SURFACES and version == 6:
     cylindrical_surface = add_tensor_glyph(cylindrical_surfaces, 
                                            'Cylinder', 
                                            'CylinderTensorGlyph')
-    #helpers.Show(cylindrical_surface)
+    #simple.Show(cylindrical_surface)
     # Todo. 
     #cylindrical_surface = TensorGlyphWithCustomSource(cylindrical_surfaces)
     #... Input=helix
-    display = helpers.GetDisplayProperties(cylindrical_surface)
-    display.Opacity = 0.2
+    rep = simple.GetDisplayProperties(cylindrical_surface)
+    rep.Opacity = 0.2
 
 
     # Planar surfaces.
     planar_surfaces = add_extract_block(static, [4], 'PlanarSurfaceData')
     planar_surface = add_tensor_glyph(planar_surfaces, 'Box', 
                                       'BoxTensorGlyph')
-    #helpers.Show(planar_surface)
-    display = helpers.GetDisplayProperties(planar_surface)
-    display.Representation = 'Wireframe'
-    display.Opacity = 0.2
+    #simple.Show(planar_surface)
+    rep = simple.GetDisplayProperties(planar_surface)
+    rep.Representation = 'Wireframe'
+    rep.Opacity = 0.2
 
 
     # Cuboidal surfaces.
@@ -279,10 +320,10 @@ if SURFACES and version == 6:
                                           'CuboidalSurfaceData')
     cuboidal_surface = add_tensor_glyph(cuboidal_surfaces, 'Box', 
                                         'BoxTensorGlyph')
-    #helpers.Show(cuboidal_surface)
-    display = helpers.GetDisplayProperties(cuboidal_surface)
-    display.Representation = 'Wireframe'
-    display.Opacity = 1.0
+    #simple.Show(cuboidal_surface)
+    rep = simple.GetDisplayProperties(cuboidal_surface)
+    rep.Representation = 'Wireframe'
+    rep.Opacity = 1.0
 
 
 # Todo. Turn camera.
@@ -290,17 +331,15 @@ if SURFACES and version == 6:
 
 # Todo.
 if version == 4 or version == 5:
-    # Paraview 3.4.
-    # Paraview 3.6 mimicking 3.4.
-    renModule.StillRender()
-    helpers.ResetCamera(renModule)
+    rv.StillRender()
+    rv.ResetCamera()
+    #simple.ResetCamera(rv)
 else:
-    # Paraview 3.6.
-    renderer = helpers.Render()
+    renderer = simple.Render()
     renderer.Background = [0,0,0] # Black.
-    helpers.ResetCamera()
+    simple.ResetCamera()
 
-#display = helpers.GetDisplayProperties(cylinder)
+#rep = simple.GetDisplayProperties(cylinder)
 
 
 
