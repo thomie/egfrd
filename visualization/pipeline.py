@@ -147,7 +147,7 @@ if PARTICLES:
         # Paraview 3.6.
         particle = servermanager.filters.Glyph(Input=particles, 
                                                GlyphType='Sphere')
-        particle.UpdatePipeline();
+        helpers.UpdatePipeline(proxy=particle);
         particle.ScaleMode = 'scalar'
 
     register(particle, 'SphereGlyph')
@@ -157,13 +157,13 @@ if PARTICLES:
     if version == 4 or version == 5:
         # Paraview 3.4.
         # Paraview 3.6 mimicking 3.4.
-        display = servermanager.CreateRepresentation(particle, renModule)
-        display.SelectionVisibility = 1
-        particle
+        display = helpers.GetDisplayProperties(particle)
+        #display = helpers.Show(particle, version=version)
+        #display = servermanager.CreateRepresentation(particle, renModule)
+        #display.SelectionVisibility = 1
     else:
         # Paraview 3.6.
         display = helpers.Show(particle)
-        #display = helpers.GetDisplayProperties(particle)
 
     '''
     display.ColorArrayName = 'colors'
@@ -297,6 +297,7 @@ if version == 4 or version == 5:
     # Paraview 3.4.
     # Paraview 3.6 mimicking 3.4.
     renModule.StillRender()
+    helpers.ResetCamera()
 else:
     # Paraview 3.6.
     renderer = helpers.Render()

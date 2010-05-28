@@ -320,3 +320,13 @@ def ResetCamera(view=None):
     view.ResetCamera()
     Render(view)
 
+def UpdatePipeline(time=None, proxy=None):
+    """Updates (executes) the given pipeline object for the given time as
+    necessary (i.e. if it did not already execute). If no source is provided,
+    the active source is used instead."""
+    if not proxy:
+        proxy = active_objects.source
+    if time:
+        proxy.UpdatePipeline(time)
+    else:
+        proxy.UpdatePipeline()
