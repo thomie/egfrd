@@ -290,7 +290,7 @@ def GetRepresentation(proxy=None, view=None):
         view = active_objects.view
     if not proxy:
         proxy = active_objects.source
-    rep = servermanager.GetRepresentation(proxy, view)
+    rep = servermanagerGetRepresentation(proxy, view)
     if not rep:
         rep = servermanager.CreateRepresentation(proxy, view)
         servermanager.ProxyManager().RegisterProxy("representations", \
@@ -298,6 +298,12 @@ def GetRepresentation(proxy=None, view=None):
         _funcs_internals.rep_counter += 1
     return rep
     
+def servermanagerGetRepresentation(aProxy, view):
+    for rep in view.Representations:
+        try: isRep = rep.Input == aProxy
+        except: isRep = False
+        if isRep: return rep
+    return None
 
 def Render(view=None):
     """Renders the given view (default value is active view)"""

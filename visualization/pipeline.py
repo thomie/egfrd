@@ -22,8 +22,6 @@ import paraview
 
 from paraview import servermanager
 
-print 'version =', paraview.compatibility.GetVersion()
-
 try:
     paraview.compatibility
     paraview.compatibility.minor = 4
@@ -55,26 +53,24 @@ def clear():
 
 
 def register(proxy, name):
-    if version == 4:
-        # Paraview 3.4.
-        name = None
+    # Hack to avoid 'Connection sink not found in the pipeline model' in 
+    '''
+    if hasattr(proxy, "Input"):
+        input = proxy.Input
     else:
-        # Hack to avoid 'Connection sink not found in the pipeline model' in 
-        # Paraview 3.6 mimicking 3.4.
-        # Paraview 3.6.
-        if hasattr(proxy, "Input"):
-            input = proxy.Input
-        else:
-            input = None
+        input = None
+    '''
 
-        # No need to unregister when using servermanager.sources/filters.
-        # Or: no need to register when using simple.Glyph() etc.
-        #servermanager.UnRegister(proxy)
-        servermanager.Register(proxy, registrationName=name)
+    # No need to unregister when using servermanager.sources/filters.
+    # Or: no need to register when using simple.Glyph() etc.
+    #servermanager.UnRegister(proxy)
+    servermanager.Register(proxy, registrationName=name)
 
-        # Reset input.
-        if input != None:
-            proxy.Input = input
+    '''
+    # Reset input.
+    if input != None:
+        proxy.Input = input
+    '''
 
 
 def addPVDReader(file, name):
@@ -157,7 +153,7 @@ if PARTICLES:
     if version == 4 or version == 5:
         # Paraview 3.4.
         # Paraview 3.6 mimicking 3.4.
-        display = helpers.GetDisplayProperties(particle)
+        display = helpers.GetDisplayProperties(particle, renModule)
         #display = helpers.Show(particle, version=version)
         #display = servermanager.CreateRepresentation(particle, renModule)
         #display.SelectionVisibility = 1
@@ -297,7 +293,7 @@ if version == 4 or version == 5:
     # Paraview 3.4.
     # Paraview 3.6 mimicking 3.4.
     renModule.StillRender()
-    helpers.ResetCamera()
+    helpers.ResetCamera(renModule)
 else:
     # Paraview 3.6.
     renderer = helpers.Render()
