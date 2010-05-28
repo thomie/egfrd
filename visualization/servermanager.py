@@ -49,6 +49,54 @@ else:
     from vtkPVServerCommonPython import *
     from vtkPVServerManagerPython import *
 
+def _wrap_property(proxy, smproperty):
+    """ Internal function.
+    Given a server manager property and its domains, returns the
+    appropriate python object.
+    """
+    property = None
+    if smproperty.IsA("vtkSMStringVectorProperty"):
+        al = smproperty.GetDomain("array_list")
+        if  al and al.IsA("vtkSMArraySelectionDomain") and \
+            smproperty.GetRepeatable():
+            property = ArrayListProperty(proxy, smproperty)
+        elif al and al.IsA("vtkSMArrayListDomain") and smproperty.GetNumberOfElements() == 5:
+            property = ArraySelectionProperty(proxy, smproperty)
+        else:
+            iter = smproperty.NewDomainIterator()
+            isFileName = False
+            while not iter.IsAtEnd():
+                if iter.GetDomain().IsA("vtkSMFileListDomain"):
+                    isFileName = True
+                    break
+                iter.Next()
+            iter.UnRegister(None)
+            if isFileName:
+                property = 'Original'
+                #property = FileNameProperty(proxy, smproperty)
+            elif _make_name_valid(smproperty.GetXMLLabel()) == 'ColorArrayName':
+                property = ColorArrayProperty(proxy, smproperty)
+            else:
+                property = VectorProperty(proxy, smproperty)
+
+        if property != 'Original':
+            return property
+
+    if smproperty.IsA("vtkSMVectorProperty"):
+        if smproperty.IsA("vtkSMIntVectorProperty") and \
+          smproperty.GetDomain("enum"):
+            property = EnumerationProperty(proxy, smproperty)
+        else:
+            property = VectorProperty(proxy, smproperty)
+    elif smproperty.IsA("vtkSMInputProperty"):
+        property = InputProperty(proxy, smproperty)
+    elif smproperty.IsA("vtkSMProxyProperty"):
+        property = ProxyProperty(proxy, smproperty)
+    else:
+        property = Property(proxy, smproperty)
+
+    return property
+
 class Proxy(object):
     """
     Proxy wrapper. Makes it easier to set/get properties on a proxy.
@@ -169,20 +217,13 @@ class Proxy(object):
         smproperty = self.SMProxy.GetProperty(name)
         if smproperty:
             property = None
-            if smproperty.IsA("vtkSMVectorProperty"):
-                property = VectorProperty(self, smproperty)
-            elif smproperty.IsA("vtkSMInputProperty"):
-                property = InputProperty(self, smproperty)
-            elif smproperty.IsA("vtkSMProxyProperty"):
-                property = ProxyProperty(self, smproperty)
-            else:
-                property = Property(self, smproperty)
+            property = _wrap_property(self, smproperty)
             if property is not None:
                 import weakref
                 self.__Properties[name] = weakref.ref(property)
             return property
         return None
-            
+
     def ListProperties(self):
         """Returns a list of all property names on this proxy."""
         property_list = []
@@ -398,6 +439,52 @@ class VectorProperty(Property):
         "Removes all elements."
         self.SMProperty().SetNumberOfElements(0)
         self._UpdateProperty()
+
+class EnumerationProperty(VectorProperty):
+    """"Subclass of VectorProperty that is applicable for enumeration type
+    properties."""
+
+    def GetElement(self, index):
+        """Returns the text for the given element if available. Returns
+        the numerical values otherwise."""
+        val = self.SMProperty.GetElement(index)
+        domain = self.SMProperty.GetDomain("enum")
+        for i in range(domain.GetNumberOfEntries()):
+            if domain.GetEntryValue(i) == val:
+                return domain.GetEntryText(i)
+        return val
+
+    def ConvertValue(self, value):
+        """Converts value to type suitable for vtSMProperty::SetElement()"""
+        if type(value) == str:
+            domain = self.SMProperty.GetDomain("enum")
+            if domain.HasEntryText(value):
+                return domain.GetEntryValueForText(value)
+            else:
+                raise ValueError("%s is not a valid value." % value)
+        return VectorProperty.ConvertValue(self, value)
+
+    def GetAvailable(self):
+        "Returns the list of available values for the property."
+        retVal = []
+        domain = self.SMProperty.GetDomain("enum")
+        for i in range(domain.GetNumberOfEntries()):
+            retVal.append(domain.GetEntryText(i))
+        return retVal
+
+    Available = property(GetAvailable, None, None, \
+        "This read-only property contains the list of values that can be applied to this property.")
+
+
+class FileNameProperty(VectorProperty):
+    """Property to set/get one or more file names.
+    This property updates the pipeline information everytime its value changes.
+    This is used to keep the array lists up to date."""
+
+    def _UpdateProperty(self):
+        "Pushes the value of this property to the server."
+        VectorProperty._UpdateProperty(self)
+        self.Proxy.FileNameChanged()
 
 class ProxyProperty(Property):
     """Python wrapper for vtkSMProxyProperty.
