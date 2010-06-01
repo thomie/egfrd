@@ -10,31 +10,15 @@ from _gfrd import Sphere, Cylinder, Box
 from multi import Multi
 
 
-# Temporary.
-'''
-class _sphere_temp(_shape):
-    def __init__(self, position, radius):
-        Shape.__init__(self) 
-        self.position = numpy.array(position)
-        self.radius = radius
-
-    def signed_distance_to(self, pos):
-        """Note: cyclic_transpose 'pos' before you use this.
-         
-        """
-        return length(pos - self.position) - self.radius
-'''
-
-
 class VTKLogger:
-    """Logger that can be used to visualize data with _kitware _para_view.
+    """Logger that can be used to visualize data with Kitware ParaView.
 
 
     * Setup. Specify buffer_size to only write last 'buffer_size' simulation 
       steps to file:
-        vtklogger = VTK_logger(sim=s, name='run')
+        vtklogger = VTKLogger(sim=s, name='run')
         or
-        vtklogger = VTK_logger(sim=s, name='run', buffer_size=100)
+        vtklogger = VTKLogger(sim=s, name='run', buffer_size=100)
 
     * Each step, to write .vtk files:
         vtklogger.log()
@@ -45,7 +29,7 @@ class VTKLogger:
 
     Inner workings:
         log():
-            (get......._data = create_doc() + add_piece()) + write_doc()
+            (get.......data = create_doc() + add_piece()) + write_doc()
         stop():
             write_pvd(name.pvd)
 
@@ -53,33 +37,33 @@ class VTKLogger:
     === Cylinders
     To visualize the cylinders a workaround using tensors is used, as 
     explained here: 
-        http://www.paraview.org/pipermail/paraview/2009-_march/011256.html.
-    The mentioned tensor_glyph.xml should be supplied with this package.
+        http://www.paraview.org/pipermail/paraview/2009-March/011256.html.
+    The mentioned tensorGlyph.xml should be supplied with this package.
 
     As explainded in the above link, to give cylinders the right color, there 
     are 2 options.
 
-    1. Build Paraview from source, after adding in file
-    Paraview3/VTK/Graphics/vtk_tensor_glyph.cxx after
-        new_scalars = vtk_float_array::_new();
+    1. Build ParaView from source, after adding in file
+    Paraview3/VTK/Graphics/vtkTensorGlyph.cxx after
+        newScalars = vtkFloatArray::New();
     a new line:
-        new_scalars->Set_name("colors");
-    2. Do that _python script thing.
+        newScalars->SetName("colors");
+    2. Do that Python script thing.
 
-    Another hack was needed to get the coloring to work. This makes VTK_logger 
+    Another hack was needed to get the coloring to work. This makes VTKLogger 
     write a vector instead of a scalar value for each color to the .vtu files. 
     But you shouldn't have to worry about that, just select 'colors' to color 
-    the _glyph.
+    the Glyph.
 
-    When doing _brownian _dynamics, don't show shells.
+    When doing Brownian Dynamics, don't show shells.
 
     extra_particle_step=True means that for each timestep an extra step is  
     recorded where only the active particle has been updated (it's shell
-  stays unchanged).
+    stays unchanged).
 
     """
     def __init__(self, sim, name='vtkdata', buffer_size=None, no_shells=False, 
-                extra_particle_step=True, color_dict=None):
+                 extra_particle_step=True, color_dict=None):
         self.sim = sim
         self.no_shells = no_shells
         self.extra_particle_step = extra_particle_step
@@ -101,15 +85,15 @@ class VTKLogger:
         self.file_list = []
         self.static_list = []
 
-        self.i = 0          # _step counter.
-        self.delta_t = 1e-11 # Needed for hack. _note: don't make too small, 
-                            # should be relative to max time.
-        self.last_time = 0   # _needed for hack.
+        self.i = 0           # Step counter.
+        self.delta_t = 1e-11 # Needed for hack. Note: don't make too small, 
+                             # should be relative to max time.
+        self.last_time = 0   # Needed for hack.
 
     def log(self):
         time = self.sim.t
         if (abs(time - self.last_time) < 1e-9) and not self.no_shells:
-            # Hack to make _paraview understand this is a different simulator 
+            # Hack to make ParaView understand this is a different simulator 
             # step but with the same time.
             # 1. During multi global time is not updated.
             # 2. During initialization time is 0.
@@ -117,8 +101,8 @@ class VTKLogger:
             # And I want every step recorded, so I can find out what happened 
             # in which step (divide by 2 actually).
             #
-            # Now Paraview should perceive a state change.
-            # When doing _brownian _dynamics, this is not needed.
+            # Now ParaView should perceive a state change.
+            # When doing Brownian Dynamics, this is not needed.
             time = self.last_time + self.delta_t
 
         # Get data.
@@ -171,7 +155,8 @@ class VTKLogger:
         file_name = 'files/' + type + str(index) + '.vtu'
         self.vtk_writer.write_doc(doc, self.name + '/' + file_name)
 
-        # Store filename and time in file_list, used by vtk_wrtie.write_pvd().
+        # Store filename and time in file_list, used by 
+        # vtk_writer.write_pvd().
         if time == None:
             self.static_list.append((type, file_name, None, None))
         else:
@@ -188,16 +173,18 @@ class VTKLogger:
 
         # Surfaces.
         self.make_snapshot('cylindrical_surfaces', 
-                         self.get_cylindrical_surface_data())
-        self.make_snapshot('planar_surfaces', self.get_planar_surface_data())
-        self.make_snapshot('cuboidal_surfaces', self.get_cuboidal_surface_data())
+                           self.get_cylindrical_surface_data())
+        self.make_snapshot('planar_surfaces',
+                           self.get_planar_surface_data())
+        self.make_snapshot('cuboidal_surfaces', 
+                           self.get_cuboidal_surface_data())
 
         # Finally, write PVD files.
         self.vtk_writer.write_pvd(self.name + '/' + 'files.pvd', 
-                                self.file_list)
+                                  self.file_list)
 
         self.vtk_writer.write_pvd(self.name + '/' + 'static.pvd', 
-                                self.static_list)
+                                  self.static_list)
 
     def get_particle_data(self):
         particles, particle_color_list = [], []
@@ -310,7 +297,7 @@ class VTKLogger:
     def process_spheres(self, spheres=[], color_list=[]):
         pos_list, radius_list = [], []
         if len(spheres) == 0:
-            # Add dummy sphere to stop _paraview from complaining.
+            # Add dummy sphere to stop ParaView from complaining.
             spheres = [self.get_dummy_sphere()]
             color_list = [0]
 
@@ -330,7 +317,7 @@ class VTKLogger:
         pos_list, tensor_list = [], []
 
         if len(cylinders) == 0:
-            # Add dummy cylinder to stop tensor_glyph from complaining.
+            # Add dummy cylinder to stop TensorGlyph from complaining.
             cylinders = [self.get_dummy_cylinder()]
             color_list = [0]
 
@@ -347,25 +334,26 @@ class VTKLogger:
                 orientation = cylinder.shape.unit_z
                 size = cylinder.shape.size
 
-            # Construct tensor. _use tensor glyph plugin from:
-            # http://www.paraview.org/pipermail/paraview/2009-_march/011256.html
+            # Construct tensor. Use TensorGlyph plugin from:
+            # http://www.paraview.org/pipermail/paraview/2009-March/011256.html
             # Unset Extract eigenvalues.
 
             # Select basis vector in which orientation is smallest.
             _, basis_vector = min(zip(abs(orientation), [[1, 0, 0], 
-                                                      [0, 1, 0], 
-                                                      [0, 0, 1]]))
+                                                         [0, 1, 0],
+                                                         [0, 0, 1]]))
             # Find 2 vectors perpendicular to orientation.
             perpendicular1 = numpy.cross(orientation, basis_vector)
             perpendicular2 = numpy.cross(orientation, perpendicular1)
             # A 'tensor' is represented as an array of 9 values.
-            # Stupid Paraview wants  a normal vector to the cylinder to orient  
-            # it. _so orientation and perpendicular1 swapped.
+            # Stupid ParaView wants  a normal vector to the cylinder to orient 
+            # it. So orientation and perpendicular1 swapped.
             tensor = numpy.concatenate((perpendicular1 * radius, 
-              orientation * size, perpendicular2 * radius))
+                                        orientation * size,
+                                        perpendicular2 * radius))
 
             self.append_lists(pos_list, position, tensor_list=tensor_list, 
-                            tensor=tensor) 
+                              tensor=tensor)
 
         return (pos_list, [], color_list, tensor_list)
 
@@ -373,28 +361,28 @@ class VTKLogger:
         pos_list, tensor_list = [], []
 
         if len(boxes) == 0:
-            # Add dummy box to stop tensor_glyph from complaining.
+            # Add dummy box to stop TensorGlyph from complaining.
             boxes = [self.get_dummy_box()]
             color_list = [0]
 
         for box in boxes:
             tensor = numpy.concatenate((box.unit_x * box.extent[0],
-                                      box.unit_y * box.extent[1],
-                                      box.unit_z * box.extent[2]))
+                                        box.unit_y * box.extent[1],
+                                        box.unit_z * box.extent[2]))
             self.append_lists(pos_list, box.position, tensor_list=tensor_list, 
-                          tensor=tensor) 
+                              tensor=tensor)
 
         return (pos_list, [], color_list, tensor_list)
 
     def append_lists(self, pos_list, pos, radius_list=[], radius=None, 
-                  tensor_list=[], tensor=None):
+                     tensor_list=[], tensor=None):
         """Helper.
 
         """
         factor = 1
         pos_list.append(pos * factor)
 
-        # Multiply radii and tensors by 2 because _paraview sets radius to 0.5 
+        # Multiply radii and tensors by 2 because ParaView sets radius to 0.5 
         # by default, and it wants full lengths for cylinders and we are 
         # storing half lengths.
         if radius:
