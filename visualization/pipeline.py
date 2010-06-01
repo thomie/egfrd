@@ -10,7 +10,7 @@ SURFACES  = None
 # Settings
 READERS   = True
 PARTICLES = True
-SPHERES    = True
+#SPHERES   = True
 #CYLINDERS = True
 #HELIX     = True
 #SURFACES  = True
@@ -134,12 +134,18 @@ def add_sphere_glyph(input, resolution=None):
     return glyph
 
 
-def add_tensor_glyph(data, type, name):
-    tensor_glyph = servermanager.filters.TensorGlyph(Input=data, 
-                                                     GlyphType=type)
-    #tensor_glyph = vtk.vtkTensorGlyph(data, GlyphType=type)
+def add_tensor_glyph(input, type, resolution=None):
+    if version == 4:
+        #tensor_glyph = vtk.vtkTensorGlyph(data, GlyphType=type)
+        pass
+    else:
+        tensor_glyph = servermanager.filters.TensorGlyph(Input=input,
+                                                         GlyphType=type)
 
-    servermanager.Register(tensor_glyph, registrationName=name)
+        if resolution != None:
+            tensor_glyph.GlyphType.Resolution = resolution
+
+    servermanager.Register(tensor_glyph)
     return tensor_glyph
 
 
@@ -233,19 +239,16 @@ if SPHERES:
 
 if CYLINDERS:
     cylinders = add_extract_block(files, [6], 'cylinders')
-    cylinder = add_tensor_glyph(cylinders, 'Cylinder', 
-                                'CylinderTensorGlyph')
-    #rep = show(cylinder)
-    # Todo.
-    #cylinder.GlyphType.Resolution = RESOLUTION
+    cylinder = add_tensor_glyph(cylinders, 'Cylinder', resolution=RESOLUTION)
+    rep = show(cylinder)
 
-    rep = simple.GetDisplayProperties(cylinder)
+    try:
+        set_color(cylinder, rep)
+    except ValueError, m:
+        print 'set_color problem:', m
+        pass
     rep.Representation = 'Wireframe'
     rep.Opacity = 1.0
-
-    # Todo.
-    #range = cylinder.PointData[0].GetRange()
-    #rep.LookupTable = simple.MakeBlueToRedLT(range[0], range[1])
 
 
 if HELIX:
@@ -263,38 +266,36 @@ if HELIX:
         simple.Show(helix)
 
 
-if SURFACES and version == 6:
+if SURFACES:
     # Cylindrical surfaces.
     cylindrical_surfaces = add_extract_block(static, [2], 
-                                             'CylindricalSurfaceData')
-    cylindrical_surface = add_tensor_glyph(cylindrical_surfaces, 
-                                           'Cylinder', 
-                                           'CylinderTensorGlyph')
-    #simple.Show(cylindrical_surface)
+                                             'cylindrical_surfaces')
+    cylindrical_surface = add_tensor_glyph(cylindrical_surfaces, 'Cylinder')
+
+    rep = show(cylindrical_surface)
+
     # Todo. 
     #cylindrical_surface = TensorGlyphWithCustomSource(cylindrical_surfaces)
     #... Input=helix
+
     rep = simple.GetDisplayProperties(cylindrical_surface)
     rep.Opacity = 0.2
 
 
     # Planar surfaces.
-    planar_surfaces = add_extract_block(static, [4], 'PlanarSurfaceData')
-    planar_surface = add_tensor_glyph(planar_surfaces, 'Box', 
-                                      'BoxTensorGlyph')
-    #simple.Show(planar_surface)
-    rep = simple.GetDisplayProperties(planar_surface)
-    rep.Representation = 'Wireframe'
-    rep.Opacity = 0.2
+    planar_surfaces = add_extract_block(static, [4], 'planar_surfaces')
+    planar_surface = add_tensor_glyph(planar_surfaces, 'Box')
+
+    rep = show(planar_surface)
+    rep.Representation = 'Surface'
+    rep.Opacity = 0.5
 
 
     # Cuboidal surfaces.
-    cuboidal_surfaces = add_extract_block(static, [6], 
-                                          'CuboidalSurfaceData')
-    cuboidal_surface = add_tensor_glyph(cuboidal_surfaces, 'Box', 
-                                        'BoxTensorGlyph')
-    #simple.Show(cuboidal_surface)
-    rep = simple.GetDisplayProperties(cuboidal_surface)
+    cuboidal_surfaces = add_extract_block(static, [6], 'cuboidal_surfaces')
+    cuboidal_surface = add_tensor_glyph(cuboidal_surfaces, 'Box')
+
+    rep = show(cuboidal_surface)
     rep.Representation = 'Wireframe'
     rep.Opacity = 1.0
 
