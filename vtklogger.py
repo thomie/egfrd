@@ -6,8 +6,9 @@ import shutil
 import numpy
 from vtk_xml_serial_unstructured import *
 #from bd import BD_simulator
-from _gfrd import Sphere, Cylinder, Box
+from _gfrd import Sphere, Cylinder, Box, Plane
 from multi import Multi
+from utils import crossproduct
 
 
 class VTKLogger:
@@ -273,17 +274,16 @@ class VTKLogger:
                self.process_cylinders(cylinders, cylinder_color_list)
 
     def get_cuboidal_surface_data(self):
-        try:
-            boxes = [self.sim.model.default_surface.shape]
-        except:
-            boxes = []
+        boxes = [self.sim.world.get_structure("world").shape]
 
         return self.process_boxes(boxes)
 
     def get_planar_surface_data(self):
+        world = self.sim.world.get_structure("world")
         boxes = [surface.shape for surface
                                in self.sim.world.structures
-                               if isinstance(surface.shape, Box)]
+                               if isinstance(surface.shape, Plane)
+                               and not surface == world]
     
         return self.process_boxes(boxes)
 
@@ -366,9 +366,15 @@ class VTKLogger:
             color_list = [0]
 
         for box in boxes:
+            try:
+                dz = box.unit_z * box.extent[2]
+            except AttributeError:
+                # Planes don't have z dimension.
+                unit_z = crossproduct(box.unit_x, box.unit_y)
+                dz = unit_z * 1e-20
             tensor = numpy.concatenate((box.unit_x * box.extent[0],
                                         box.unit_y * box.extent[1],
-                                        box.unit_z * box.extent[2]))
+                                        dz))
             self.append_lists(pos_list, box.position, tensor_list=tensor_list, 
                               tensor=tensor)
 
