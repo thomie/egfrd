@@ -1,4 +1,5 @@
 from paraview import servermanager
+from paraview import vtk
 
 READERS   = None
 PARTICLES = None
@@ -10,10 +11,10 @@ SURFACES  = None
 # Settings
 READERS   = True
 PARTICLES = True
-#SPHERES   = True
-#CYLINDERS = True
+SPHERES   = True
+CYLINDERS = True
 #HELIX     = True
-#SURFACES  = True
+SURFACES  = True
 
 
 PARTICLE_SCALE_FACTOR = 4
@@ -43,10 +44,14 @@ def clear():
     def name(proxy):
         return (type(proxy)).__name__
 
-    def compare_glyphs_first(x,y):
-        if name(x)[-5:] == 'Glyph':
+    def compare_filters_first_then_glyphs(x,y):
+        if name(x) == 'ProgrammableFilter':
             return -1
-        if name(y)[-5:] == 'Glyph':
+        elif name(y) == 'ProgrammableFilter':
+            return 1
+        elif name(x)[-5:] == 'Glyph':
+            return -1
+        elif name(y)[-5:] == 'Glyph':
             return 1
         return cmp(x,y)
 
@@ -56,7 +61,7 @@ def clear():
 
     if version == 4:
         for proxy in sorted(pxm.GetProxiesInGroup('sources').itervalues(),
-                            compare_glyphs_first):
+                            compare_filters_first_then_glyphs):
             if hasattr(proxy, "Input"):
                 # Avoid 'Connection sink not found in the pipeline model'.
                 proxy.Input = None
@@ -67,7 +72,7 @@ def clear():
         rv.Representations = []
     else:
         for proxy in sorted(simple.GetSources().itervalues(), 
-                            compare_glyphs_first):
+                            compare_filters_first_then_glyphs):
             if hasattr(proxy, "Input"):
                 # Avoid 'Connection sink not found in the pipeline model'.
                 proxy.Input = None
@@ -145,8 +150,43 @@ def add_tensor_glyph(input, type, resolution=None):
         if resolution != None:
             tensor_glyph.GlyphType.Resolution = resolution
 
+    # Avoid. QPainter::begin: Cannot paint on a null pixmap.
     servermanager.Register(tensor_glyph)
     return tensor_glyph
+
+def color_hack(tensor_glyph):
+    # Hack to make coloring work later on.
+    # http://www.paraview.org/pipermail/paraview/2009-March/011267.html
+    # Dealing with composite datasets.
+    # http://www.itk.org/Wiki/Python_Programmable_Filter
+    filter = servermanager.filters.ProgrammableFilter()
+    filter.Initialize()
+    filter.Input = tensor_glyph
+    filter.Script = """def flatten(input, output):
+    output.ShallowCopy(input)
+    output.GetPointData().GetScalars().SetName('colors')
+
+input = self.GetInput()
+output = self.GetOutput()
+
+output.CopyStructure(input)
+iter = input.NewIterator()
+iter.UnRegister(None)
+iter.InitTraversal()
+while not iter.IsDoneWithTraversal():
+    curInput = iter.GetCurrentDataObject()
+    curOutput = curInput.NewInstance()
+    curOutput.UnRegister(None)
+    output.SetDataSet(iter, curOutput)
+    flatten(curInput, curOutput)
+    iter.GoToNextItem();"""
+
+    filter.UpdatePipeline()
+    filter.UpdatePipelineInformation();
+
+    servermanager.Register(filter)
+
+    return filter
 
 
 def set_color(proxy, rep):
@@ -196,7 +236,7 @@ def show(proxy):
         rep = simple.Show(proxy)
 
     rep.Visibility = 1
-    rep.SelectionVisibility = 1
+    #rep.SelectionVisibility = 1
     return rep
 
 
@@ -240,13 +280,14 @@ if SPHERES:
 if CYLINDERS:
     cylinders = add_extract_block(files, [6], 'cylinders')
     cylinder = add_tensor_glyph(cylinders, 'Cylinder', resolution=RESOLUTION)
+
     rep = show(cylinder)
 
-    try:
-        set_color(cylinder, rep)
-    except ValueError, m:
-        print 'set_color problem:', m
-        pass
+    rep.Visibility = 0
+    hack = color_hack(cylinder)
+    rep = show(hack)
+
+    set_color(hack, rep)
     rep.Representation = 'Wireframe'
     rep.Opacity = 1.0
 
@@ -279,7 +320,7 @@ if SURFACES:
     #... Input=helix
 
     rep = simple.GetDisplayProperties(cylindrical_surface)
-    rep.Opacity = 0.2
+    rep.Opacity = 0.5
 
 
     # Planar surfaces.
