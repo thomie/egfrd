@@ -13,11 +13,12 @@ READERS   = True
 PARTICLES = True
 SPHERES   = True
 CYLINDERS = True
-#HELIX     = True
+HELIX     = True
 SURFACES  = True
 
 
-PARTICLE_SCALE_FACTOR = 4
+PARTICLE_RADIUS_SCALE_FACTOR = 4
+HELIX_RADIUS_SCALE_FACTOR = 4
 RESOLUTION = 18
 
 
@@ -44,14 +45,18 @@ def clear():
     def name(proxy):
         return (type(proxy)).__name__
 
-    def programmable_filters_first_then_glyphs(x,y):
+    def cmp_tubes_filters_glyphs(x,y):
+        if name(x) == 'GenerateTubes':
+            return -1
+        elif name(y) == 'GenerateTubes':
+            return 1
         if name(x) == 'ProgrammableFilter':
             return -1
         elif name(y) == 'ProgrammableFilter':
             return 1
-        elif name(x)[-5:] == 'Glyph':
+        elif name(x) == 'Glyph' or name(x)[:11] == 'TensorGlyph':
             return -1
-        elif name(y)[-5:] == 'Glyph':
+        elif name(y) == 'Glyph' or name(y)[:11] == 'TensorGlyph':
             return 1
         return cmp(x,y)
 
@@ -61,7 +66,7 @@ def clear():
 
     if version == 4:
         for proxy in sorted(pxm.GetProxiesInGroup('sources').itervalues(),
-                            programmable_filters_first_then_glyphs):
+                            cmp_tubes_filters_glyphs):
             if hasattr(proxy, "Input"):
                 # Avoid 'Connection sink not found in the pipeline model'.
                 proxy.Input = None
@@ -72,10 +77,13 @@ def clear():
         rv.Representations = []
     else:
         for proxy in sorted(simple.GetSources().itervalues(), 
-                            programmable_filters_first_then_glyphs):
+                            cmp_tubes_filters_glyphs):
             if hasattr(proxy, "Input"):
                 # Avoid 'Connection sink not found in the pipeline model'.
                 proxy.Input = None
+            if hasattr(proxy, "GlyphType"):
+                # Avoid 'Connection sink not found in the pipeline model'.
+                proxy.GlyphType = None
             simple.Delete(proxy)
 
     rv.ResetCamera()
@@ -141,7 +149,7 @@ def add_sphere_glyph(input, resolution=None, name=None):
     return glyph
 
 
-def add_tensor_glyph(input, type, resolution=None, name=None):
+def add_tensor_glyph(input, type, resolution=None, name=None, scale=None):
     if version == 4:
         #tensor_glyph = vtk.vtkTensorGlyph(data, GlyphType=type)
         pass
@@ -151,6 +159,24 @@ def add_tensor_glyph(input, type, resolution=None, name=None):
 
         if resolution != None:
             tensor_glyph.GlyphType.Resolution = resolution
+
+        if scale != None:
+            tensor_glyph.GlyphType.Radius *= scale
+
+    if name != None:
+        servermanager.Register(tensor_glyph, registrationName=name)
+    else:
+        servermanager.Register(tensor_glyph)
+
+    return tensor_glyph
+
+
+def add_tensor_glyph_with_custom_source(input, source, name=None):
+    if version == 4:
+        pass
+    else:
+        Type = servermanager.filters.TensorGlyphWithCustomSource
+        tensor_glyph = Type(Input=input, GlyphType=source)
 
     if name != None:
         servermanager.Register(tensor_glyph, registrationName=name)
@@ -222,8 +248,8 @@ def set_color(proxy, rep):
     rep.LookupTable = lt
 
 
-# Taken from simple.py (ParaView 3.6).
 class _funcs_internals:
+    # Taken from simple.py (ParaView 3.6).
     "Internal class."
     first_render = True
     view_counter = 0
@@ -260,7 +286,7 @@ if PARTICLES:
     particles = add_extract_block(files, [2], 'b1')
 
     particle = add_sphere_glyph(particles, name='Particles')
-    particle.SetScaleFactor = PARTICLE_SCALE_FACTOR
+    particle.SetScaleFactor = PARTICLE_RADIUS_SCALE_FACTOR
 
     rep = show(particle)
 
@@ -296,37 +322,60 @@ if CYLINDERS:
     rep.Opacity = 1.0
 
 
-if HELIX:
-    helix_file = open(paraview_scripts_directory + '/helix.py', 'r')
-    if version == 4:
-        #helix = ProgrammableFilter()
-        #helix.Script = helix_file.read()
-        #servermanager.Register(helix) # Needed, or register.
-        pass
-    else:
-        # Todo. Scale it.
-        helix = servermanager.sources.ProgrammableSource()
-        helix.Script = helix_file.read()
-        servermanager.Register(helix, registrationName='Helix')
-        simple.Show(helix)
-
-    helix_file.close()
-
-
 if SURFACES:
     # Cylindrical surfaces.
     cylindrical_surfaces = add_extract_block(static, [2], 'b1')
-    cylindrical_surface = add_tensor_glyph(cylindrical_surfaces, 'Cylinder',
-                                           name='Cylindrical Surfaces')
 
-    rep = show(cylindrical_surface)
+    if not HELIX:
+        cylindrical_surface = add_tensor_glyph(cylindrical_surfaces, 
+                                               'Cylinder',
+                                               name='Cylindrical Surfaces',
+                                               scale=HELIX_RADIUS_SCALE_FACTOR)
 
-    # Todo. 
-    #cylindrical_surface = TensorGlyphWithCustomSource(cylindrical_surfaces)
-    #... Input=helix
+        rep = show(cylindrical_surface)
+        rep.Representation = 'Wireframe'
+        rep.Opacity = 0.5
+    else:
+        helix_file = open(paraview_scripts_directory + '/helix.py', 'r')
+        if version == 4:
+            #source = ProgrammableFilter()
+            #source.Script = helix_file.read()
+            #servermanager.Register(source) # Needed, or register.
+            pass
+        else:
+            helix_source = servermanager.sources.ProgrammableSource()
+            helix_source.Script = 'HELIX_RADIUS_SCALE_FACTOR = ' + \
+                                  str(HELIX_RADIUS_SCALE_FACTOR) + \
+                                  '\n' + helix_file.read()
+            servermanager.Register(helix_source, registrationName='ps')
 
-    rep = simple.GetDisplayProperties(cylindrical_surface)
-    rep.Opacity = 1.0
+        helix_file.close()
+
+
+        helix = add_tensor_glyph_with_custom_source(cylindrical_surfaces, 
+                                                    helix_source, name='tgcs')
+
+        tube = servermanager.filters.GenerateTubes(Input=helix)
+        servermanager.Register(tube, registrationName='Double Helix')
+
+        # Compute helix radius.
+        di = cylindrical_surfaces.GetDataInformation()
+        tensor = di.GetPointDataInformation().GetArrayInformation('tensors')
+
+        cylindrical_surface_radius = 1e100
+        for i in range(9):
+            # Find minimum value of tensor larger than 0.
+            value = tensor.GetComponentRange(i)[0]
+            if value > 0 and value < cylindrical_surface_radius:
+                cylindrical_surface_radius = value
+
+        helix_radius = HELIX_RADIUS_SCALE_FACTOR * cylindrical_surface_radius
+
+        # Make tube a bit thinner than helix.
+        tube.Radius = helix_radius / 20
+
+        rep = show(tube)
+        rep.ColorArrayName = 'TubeNormals'
 
 
     # Planar surfaces.
@@ -349,17 +398,16 @@ if SURFACES:
     rep.Opacity = 1.0
 
 
-SetActiveSource(cylindrical_surface)
-
 # Set camera.
 cam = GetActiveCamera()
-rv.ResetCamera()
+rv.ResetCamera() # Sets focalpoint to center of box.
 cam.SetViewUp(0,0,1)
 focal = cam.GetFocalPoint()
-cam.SetPosition(focal[0]*10, focal[1], focal[2])
+cam.SetPosition(focal[0]*10, focal[1], focal[2]) # Straigh in front of box.
 
 rv.Background = [0,0,0] # Black.
-rv.ResetCamera()
+rv.ResetCamera() # Changes cam.GetPosition() only by zooming in/out.
 rv.StillRender()
 
+#SetActiveSource(cylindrical_surface)
 

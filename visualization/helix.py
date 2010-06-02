@@ -12,6 +12,8 @@ length = 1.0                # Length of each helix. 8.
 rounds = 6.0                # Number of times around. 3.
 phase_shift = math.pi/1.5   # Phase shift between helixes.
 scaleyz = 0.5
+if 'HELIX_RADIUS_SCALE_FACTOR' in vars():
+    scaleyz *= HELIX_RADIUS_SCALE_FACTOR
 
 # Get a vtk.PolyData object for the output
 #pdo = vtk.vtkPolyData()
