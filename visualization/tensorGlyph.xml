@@ -33,7 +33,7 @@
 
 
   <ProxyGroup name="filters">
-   <SourceProxy name="Tensor Glyph" class="vtkTensorGlyph">
+   <SourceProxy name="TensorGlyph" class="vtkTensorGlyph">
        <InputProperty
         name="Input"
         command="SetInputConnection">

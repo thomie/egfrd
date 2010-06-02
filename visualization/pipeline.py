@@ -22,7 +22,7 @@ RESOLUTION = 18
 
 
 if not servermanager.ActiveConnection:
-    exit('pvpython not supported')
+    exit('pvpython not supported. Use ParaView\'s Python shell.')
 
 
 # Detect version.
@@ -194,6 +194,7 @@ def build():
         filter.Script = """def flatten(input, output):
     output.ShallowCopy(input)
     output.GetPointData().GetScalars().SetName('colors')
+    #output.GetPointData().GetVectors().SetName('colors_as_vector')
 
 input = self.GetInput()
 output = self.GetOutput()
@@ -406,7 +407,7 @@ while not iter.IsDoneWithTraversal():
 
     # Set camera.
     global cam
-    cam = GetActiveCamera()
+    cam = rv.GetActiveCamera()
     rv.ResetCamera() # Sets focalpoint to center of box.
     cam.SetViewUp(0,0,1)
     focal = cam.GetFocalPoint()

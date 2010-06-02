@@ -149,7 +149,7 @@ class VTK_XML_Serial_Unstructured:
 
             if len(colors) > 0:
                 color_node = doc.createElementNS("VTK", "DataArray")
-                color_node.setAttribute("Name", "colors_(really_a_scalar)") 
+                color_node.setAttribute("Name", "colors_as_vector")
                 color_node.setAttribute("NumberOfComponents", "3")
                 color_node.setAttribute("type", "Float32")
                 color_node.setAttribute("format", "ascii")
