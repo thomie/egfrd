@@ -177,8 +177,8 @@ class VTKLogger:
                            self.get_cylindrical_surface_data())
         self.make_snapshot('planar_surfaces',
                            self.get_planar_surface_data())
-        self.make_snapshot('cuboidal_surfaces', 
-                           self.get_cuboidal_surface_data())
+        self.make_snapshot('cuboidal_regions', 
+                           self.get_cuboidal_region_data())
 
         # Finally, write PVD files.
         self.vtk_writer.write_pvd(self.name + '/' + 'files.pvd', 
@@ -273,7 +273,7 @@ class VTKLogger:
         return self.process_spheres(shells, shell_color_list), \
                self.process_cylinders(cylinders, cylinder_color_list)
 
-    def get_cuboidal_surface_data(self):
+    def get_cuboidal_region_data(self):
         boxes = [self.sim.world.get_structure("world").shape]
 
         return self.process_boxes(boxes)

@@ -44,7 +44,7 @@ def clear():
     def name(proxy):
         return (type(proxy)).__name__
 
-    def compare_filters_first_then_glyphs(x,y):
+    def programmable_filters_first_then_glyphs(x,y):
         if name(x) == 'ProgrammableFilter':
             return -1
         elif name(y) == 'ProgrammableFilter':
@@ -61,7 +61,7 @@ def clear():
 
     if version == 4:
         for proxy in sorted(pxm.GetProxiesInGroup('sources').itervalues(),
-                            compare_filters_first_then_glyphs):
+                            programmable_filters_first_then_glyphs):
             if hasattr(proxy, "Input"):
                 # Avoid 'Connection sink not found in the pipeline model'.
                 proxy.Input = None
@@ -72,7 +72,7 @@ def clear():
         rv.Representations = []
     else:
         for proxy in sorted(simple.GetSources().itervalues(), 
-                            compare_filters_first_then_glyphs):
+                            programmable_filters_first_then_glyphs):
             if hasattr(proxy, "Input"):
                 # Avoid 'Connection sink not found in the pipeline model'.
                 proxy.Input = None
@@ -87,7 +87,6 @@ def add_pvd_reader(file, name):
     servermanager.Register(reader, registrationName=name)
     if version == 4:
         reader.UpdatePipeline()
-        reader.UpdatePipelineInformation()
     else:
         pass
 
@@ -100,13 +99,12 @@ def add_extract_block(data, indices, name):
 
     # This is needed to make SetScaleFactor and TensorGlyph work.
     block.UpdatePipeline();
-    block.UpdatePipelineInformation();
 
     servermanager.Register(block, registrationName=name)
     return block
 
 
-def add_sphere_glyph(input, resolution=None):
+def add_sphere_glyph(input, resolution=None, name=None):
     if version == 4:
         source = servermanager.sources.SphereSource()
         if resolution != None:
@@ -135,11 +133,15 @@ def add_sphere_glyph(input, resolution=None):
 
     glyph.SetScaleFactor = 1
 
-    servermanager.Register(glyph)
+    if name != None:
+        servermanager.Register(glyph, registrationName=name)
+    else:
+        servermanager.Register(glyph)
+
     return glyph
 
 
-def add_tensor_glyph(input, type, resolution=None):
+def add_tensor_glyph(input, type, resolution=None, name=None):
     if version == 4:
         #tensor_glyph = vtk.vtkTensorGlyph(data, GlyphType=type)
         pass
@@ -150,14 +152,17 @@ def add_tensor_glyph(input, type, resolution=None):
         if resolution != None:
             tensor_glyph.GlyphType.Resolution = resolution
 
-    # Avoid. QPainter::begin: Cannot paint on a null pixmap.
-    servermanager.Register(tensor_glyph)
+    if name != None:
+        servermanager.Register(tensor_glyph, registrationName=name)
+    else:
+        servermanager.Register(tensor_glyph)
+
     return tensor_glyph
 
-def color_hack(tensor_glyph):
-    # Hack to make coloring work later on.
+
+def programmable_filter_color_hack(tensor_glyph, name):
     # http://www.paraview.org/pipermail/paraview/2009-March/011267.html
-    # Dealing with composite datasets.
+    # Dealing with composite datasets:
     # http://www.itk.org/Wiki/Python_Programmable_Filter
     filter = servermanager.filters.ProgrammableFilter()
     filter.Initialize()
@@ -182,9 +187,8 @@ while not iter.IsDoneWithTraversal():
     iter.GoToNextItem();"""
 
     filter.UpdatePipeline()
-    filter.UpdatePipelineInformation();
 
-    servermanager.Register(filter)
+    servermanager.Register(filter, registrationName=name)
 
     return filter
 
@@ -236,7 +240,6 @@ def show(proxy):
         rep = simple.Show(proxy)
 
     rep.Visibility = 1
-    #rep.SelectionVisibility = 1
     return rep
 
 
@@ -254,9 +257,9 @@ if READERS:
 
 
 if PARTICLES:
-    particles = add_extract_block(files, [2], 'particles')
+    particles = add_extract_block(files, [2], 'b1')
 
-    particle = add_sphere_glyph(particles)
+    particle = add_sphere_glyph(particles, name='Particles')
     particle.SetScaleFactor = PARTICLE_SCALE_FACTOR
 
     rep = show(particle)
@@ -264,11 +267,10 @@ if PARTICLES:
     set_color(particle, rep)
 
 
-
 if SPHERES:
-    spheres = add_extract_block(files, [4], 'spheres')
+    spheres = add_extract_block(files, [4], 'b2')
 
-    sphere = add_sphere_glyph(spheres, RESOLUTION)
+    sphere = add_sphere_glyph(spheres, RESOLUTION, name='Spheres')
 
     rep = show(sphere)
 
@@ -278,16 +280,18 @@ if SPHERES:
 
 
 if CYLINDERS:
-    cylinders = add_extract_block(files, [6], 'cylinders')
-    cylinder = add_tensor_glyph(cylinders, 'Cylinder', resolution=RESOLUTION)
+    cylinders = add_extract_block(files, [6], 'b3')
+    cylinder = add_tensor_glyph(cylinders, 'Cylinder', resolution=RESOLUTION,
+                                name='tg')
 
     rep = show(cylinder)
 
     rep.Visibility = 0
-    hack = color_hack(cylinder)
-    rep = show(hack)
+    programmable_filter = programmable_filter_color_hack(cylinder,
+                                                         name='Cylinders')
+    rep = show(programmable_filter)
 
-    set_color(hack, rep)
+    set_color(programmable_filter, rep)
     rep.Representation = 'Wireframe'
     rep.Opacity = 1.0
 
@@ -306,12 +310,14 @@ if HELIX:
         servermanager.Register(helix, registrationName='Helix')
         simple.Show(helix)
 
+    helix_file.close()
+
 
 if SURFACES:
     # Cylindrical surfaces.
-    cylindrical_surfaces = add_extract_block(static, [2], 
-                                             'cylindrical_surfaces')
-    cylindrical_surface = add_tensor_glyph(cylindrical_surfaces, 'Cylinder')
+    cylindrical_surfaces = add_extract_block(static, [2], 'b1')
+    cylindrical_surface = add_tensor_glyph(cylindrical_surfaces, 'Cylinder',
+                                           name='Cylindrical Surfaces')
 
     rep = show(cylindrical_surface)
 
@@ -320,12 +326,13 @@ if SURFACES:
     #... Input=helix
 
     rep = simple.GetDisplayProperties(cylindrical_surface)
-    rep.Opacity = 0.5
+    rep.Opacity = 1.0
 
 
     # Planar surfaces.
-    planar_surfaces = add_extract_block(static, [4], 'planar_surfaces')
-    planar_surface = add_tensor_glyph(planar_surfaces, 'Box')
+    planar_surfaces = add_extract_block(static, [4], 'b2')
+    planar_surface = add_tensor_glyph(planar_surfaces, 'Box', 
+                                      name='Planar Surfaces')
 
     rep = show(planar_surface)
     rep.Representation = 'Surface'
@@ -333,23 +340,26 @@ if SURFACES:
 
 
     # Cuboidal surfaces.
-    cuboidal_surfaces = add_extract_block(static, [6], 'cuboidal_surfaces')
-    cuboidal_surface = add_tensor_glyph(cuboidal_surfaces, 'Box')
+    cuboidal_regions = add_extract_block(static, [6], 'b3')
+    cuboidal_region = add_tensor_glyph(cuboidal_regions, 'Box',
+                                       name='Cuboidal Regions')
 
-    rep = show(cuboidal_surface)
+    rep = show(cuboidal_region)
     rep.Representation = 'Wireframe'
     rep.Opacity = 1.0
 
 
-# Todo. Turn camera.
-#SetActiveSource(cylindrical_surface)
+SetActiveSource(cylindrical_surface)
 
+# Set camera.
+cam = GetActiveCamera()
+rv.ResetCamera()
+cam.SetViewUp(0,0,1)
+focal = cam.GetFocalPoint()
+cam.SetPosition(focal[0]*10, focal[1], focal[2])
 
 rv.Background = [0,0,0] # Black.
-#rv.StillRender()
 rv.ResetCamera()
 rv.StillRender()
-
-#rep = show(cylinder)
 
 
