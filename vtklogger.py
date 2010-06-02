@@ -107,46 +107,50 @@ class VTKLogger:
             time = self.last_time + self.delta_t
 
         # Get data.
-        particles = self.get_particle_data()
-        spheres, cylinders = self.get_shell_data_from_scheduler()
+        particle_data = self.get_particle_data()
+        sphere_data, cylinder_data = self.get_shell_data_from_scheduler()
 
         # Write to buffer or file.
         if self.buffer_size:
             # Store in buffer, instead of writing to file directly.
-            self.buffer.append((time, self.i, particles, spheres, 
-                                cylinders))
+            self.buffer.append((time, self.i, particle_data, sphere_data, 
+                                cylinder_data))
 
             if self.i >= self.buffer_size:
                 # FIFO.
                 del self.buffer[0]
         else:
             # Write normal log.
-            self.writelog(time, self.i, (particles, spheres, cylinders))
+            self.writelog(time, self.i,
+                          (particle_data, sphere_data, cylinder_data))
 
         self.i += 1
         self.last_time = time
 
-    def writelog(self, time, index, (particles, spheres, cylinders)):
+    def writelog(self, time, index,
+                 (particle_data, sphere_data, cylinder_data)):
         if index == 0:
-            self.previous_spheres = spheres
-            self.previous_cylinders = cylinders
+            self.previous_sphere_data = sphere_data
+            self.previous_cylinder_data = cylinder_data
 
         if not self.no_shells and self.extra_particle_step:
-            # Show step where only particles have been updated.
+            # Show step where only particle_data have been updated.
             index *= 2;
-            self.make_snapshot('particles', particles, index, time)
-            self.make_snapshot('spheres', self.previous_spheres, index, time)
-            self.make_snapshot('cylinders', self.previous_cylinders, index, time)
+            self.make_snapshot('particle_data', particle_data, index, time)
+            self.make_snapshot('sphere_data', self.previous_sphere_data, 
+                               index, time)
+            self.make_snapshot('cylinder_data', self.previous_cylinder_data, 
+                               index, time)
 
             time += self.delta_t
             index += 1
 
-        self.make_snapshot('particles', particles, index, time)
-        self.make_snapshot('spheres', spheres, index, time)
-        self.make_snapshot('cylinders', cylinders, index, time)
+        self.make_snapshot('particle_data', particle_data, index, time)
+        self.make_snapshot('sphere_data', sphere_data, index, time)
+        self.make_snapshot('cylinder_data', cylinder_data, index, time)
 
-        self.previous_spheres = spheres
-        self.previous_cylinders = cylinders
+        self.previous_sphere_data = sphere_data
+        self.previous_cylinder_data = cylinder_data
 
     def make_snapshot(self, type, data, index='', time=None):
         """Write data to file.
@@ -168,6 +172,38 @@ class VTKLogger:
 
         # Write contents of buffer.
         for index, entry in enumerate(self.buffer):
+            if index == 0:
+                # Add dummy data with color range.
+                # Todo. Clean this up. Write color range as field data maybe.
+                dummy_particles, dummy_colors = \
+                    self.get_dummy_particles_and_color_range()
+                dummy_particle_data = \
+                    self.process_spheres(dummy_particles, dummy_colors)
+                particle_data = entry[2]
+                particle_data[0].extend(dummy_particle_data[0])
+                particle_data[1].extend(dummy_particle_data[1])
+                particle_data[2].extend(dummy_particle_data[2])
+                particle_data[3].extend(dummy_particle_data[3])
+
+                dummy_spheres, dummy_colors = \
+                    self.get_dummy_spheres_and_color_range()
+                dummy_sphere_data = \
+                    self.process_spheres(dummy_spheres, dummy_colors)
+                sphere_data = entry[3]
+                sphere_data[0].extend(dummy_sphere_data[0])
+                sphere_data[1].extend(dummy_sphere_data[1])
+                sphere_data[2].extend(dummy_sphere_data[2])
+                sphere_data[3].extend(dummy_sphere_data[3])
+
+                dummy_cylinders, dummy_colors = \
+                    self.get_dummy_cylinders_and_color_range()
+                dummy_cylinder_data = \
+                    self.process_cylinders(dummy_cylinders, dummy_colors)
+                cylinder_data = entry[4]
+                cylinder_data[0].extend(dummy_cylinder_data[0])
+                cylinder_data[1].extend(dummy_cylinder_data[1])
+                cylinder_data[2].extend(dummy_cylinder_data[2])
+                cylinder_data[3].extend(dummy_cylinder_data[3])
             if index % 10 == 0:
                 print 'vtklogger writing step %s from buffer' % index
             self.writelog(entry[0], index, entry[2:])
@@ -187,8 +223,45 @@ class VTKLogger:
         self.vtk_writer.write_pvd(self.name + '/' + 'static.pvd', 
                                   self.static_list)
 
+    def get_dummy_particles_and_color_range(self):
+        # Todo. Clean this up. Write color range as field data maybe.
+        # Add dummy particle with color 1 (species.id.serial starts at 1).
+        particles = [self.get_dummy_sphere()]
+        colors = [1]
+        # Add dummy particle with color is highest species index.
+        particles.append(self.get_dummy_sphere())
+        try:
+            max_color = max(self.color_dict.values())
+        except:
+            for species in self.sim.world.species:
+                # Find species with highest id.
+                pass
+            max_color = species.id.serial
+        colors.append(max_color)
+        return particles, colors
+
+    def get_dummy_spheres_and_color_range(self):
+        # Todo. Clean this up. Write color range as field data maybe.
+        # Add dummy sphere with color is 0.
+        spheres = [self.get_dummy_sphere()]
+        colors = [0]
+        # Add dummy sphere with color is 3.
+        spheres.append(self.get_dummy_sphere())
+        colors.append(3)
+        return spheres, colors
+
+    def get_dummy_cylinders_and_color_range(self):
+        # Todo. Clean this up. Write color range as field data maybe.
+        # Add dummy cylinder with color is 0.
+        cylinders = [self.get_dummy_cylinder()]
+        colors = [0]
+        # Add dummy cylinder with color is 3.
+        cylinders.append(self.get_dummy_cylinder())
+        colors.append(3)
+        return cylinders, colors
+
     def get_particle_data(self):
-        particles, particle_color_list = [], []
+        particles, colors = [], []
 
         for species in self.sim.world.species:
             for particle_id in self.sim.world.get_particle_ids(species):
@@ -198,27 +271,19 @@ class VTKLogger:
                     color = self.color_dict[species.id.serial]
                 except:
                     color = species.id.serial
-                particle_color_list.append(color)
-
-        species_id_serial_max = species.id.serial
+                colors.append(color)
 
         if self.i == 0:
-            # Add dummy particle with color 1 (species.id.serial starts at 1).
-            particles.append(self.get_dummy_sphere())
-            particle_color_list.append(1)
-            # Add dummy particle with color is highest species index.
-            particles.append(self.get_dummy_sphere())
-            try:
-                max_color = max(self.color_dict.values())
-            except:
-                max_color = species_id_serial_max
-            particle_color_list.append(max_color)
+            dummy_particles, dummy_colors = \
+                self.get_dummy_particles_and_color_range()
+            particles.extend(dummy_particles)
+            colors.extend(dummy_colors)
 
-        return self.process_spheres(particles, particle_color_list)
+        return self.process_spheres(particles, colors)
 
     def get_shell_data_from_scheduler(self):
-        shells, shell_color_list = [], []
-        cylinders, cylinder_color_list = [], []
+        spheres, sphere_colors = [], []
+        cylinders, cylinder_colors = [], []
 
         if self.no_shells == True:
             number_of_shells = 0
@@ -229,18 +294,15 @@ class VTKLogger:
             top_event = self.sim.scheduler.getTopEvent()
 
         if self.i == 0:
-            # Add dummy sphere with color is 0.
-            shells.append(self.get_dummy_sphere())
-            shell_color_list.append(0)
-            # Add dummy sphere with color is 3.
-            shells.append(self.get_dummy_sphere())
-            shell_color_list.append(3)
-            # Add dummy cylinder with color is 0.
-            cylinders.append(self.get_dummy_cylinder())
-            cylinder_color_list.append(0)
-            # Add dummy cylinder with color is 3.
-            cylinders.append(self.get_dummy_cylinder())
-            cylinder_color_list.append(3)
+            dummy_spheres, dummy_colors = \
+                self.get_dummy_spheres_and_color_range()
+            spheres.extend(dummy_spheres)
+            sphere_colors.extend(dummy_colors)
+
+            dummy_cylinders, dummy_colors = \
+                self.get_dummy_cylinders_and_color_range()
+            cylinders.extend(dummy_cylinders)
+            cylinder_colors.extend(dummy_colors)
 
         for event_index in range(number_of_shells):
             # Get event
@@ -263,15 +325,15 @@ class VTKLogger:
                 # Only cylinders have size.
                 shell.shape.size
                 cylinders.append(shell)
-                cylinder_color_list.append(color)
+                cylinder_colors.append(color)
             except:
                 # Spheres: single, pair or multi.
                 for _, shell in object.shell_list:
-                    shells.append(shell)
-                    shell_color_list.append(color)
+                    spheres.append(shell)
+                    sphere_colors.append(color)
 
-        return self.process_spheres(shells, shell_color_list), \
-               self.process_cylinders(cylinders, cylinder_color_list)
+        return self.process_spheres(spheres, sphere_colors), \
+               self.process_cylinders(cylinders, cylinder_colors)
 
     def get_cuboidal_region_data(self):
         boxes = [self.sim.world.get_structure("world").shape]
