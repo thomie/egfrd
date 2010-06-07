@@ -447,7 +447,7 @@ class VTKLogger:
         """Helper.
 
         """
-        factor = 1
+        factor = 1e9
         pos_list.append(pos * factor)
 
         # Multiply radii and tensors by 2 because ParaView sets radius to 0.5 

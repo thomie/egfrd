@@ -40,10 +40,15 @@ else:
 
 
 def clear():
+    if version == 4:
+        # Reset time so that color range is detected correctly on build().
+        rv.ViewTime = 0
+        rv.StillRender()
+
     def name(proxy):
         return (type(proxy)).__name__
 
-    def cmp_tubes_filters_glyphs(x,y):
+    def cmp_tubes_filters_glyphs_blocks(x,y):
         if name(x) == 'GenerateTubes':
             return -1
         elif name(y) == 'GenerateTubes':
@@ -56,26 +61,32 @@ def clear():
             return -1
         elif name(y) == 'Glyph' or name(y)[:11] == 'TensorGlyph':
             return 1
+        if name(x) == 'ExtractBlock':
+            return -1
+        elif name(y) == 'ExtractBlock':
+            return 1
         return cmp(x,y)
 
     pxm = servermanager.ProxyManager()
     for proxy in pxm.GetProxiesInGroup('lookup_tables').itervalues():
         servermanager.UnRegister(proxy)
+        pass
 
     if version == 4:
         for proxy in sorted(pxm.GetProxiesInGroup('sources').itervalues(),
-                            cmp_tubes_filters_glyphs):
+                            cmp_tubes_filters_glyphs_blocks):
             if hasattr(proxy, "Input"):
                 # Avoid 'Connection sink not found in the pipeline model'.
                 proxy.Input = None
             servermanager.UnRegister(proxy)
         for proxy in pxm.GetProxiesInGroup('representations').itervalues():
             servermanager.UnRegister(proxy)
+            pass
 
         rv.Representations = []
     else:
         for proxy in sorted(simple.GetSources().itervalues(), 
-                            cmp_tubes_filters_glyphs):
+                            cmp_tubes_filters_glyphs_blocks):
             if hasattr(proxy, "Input"):
                 # Avoid 'Connection sink not found in the pipeline model'.
                 proxy.Input = None
@@ -94,6 +105,8 @@ def build():
         servermanager.Register(reader, registrationName=name)
         if version == 4:
             reader.UpdatePipeline()
+            # Update TimestepValues.
+            reader.UpdatePipelineInformation();
         else:
             pass
 
@@ -127,7 +140,9 @@ def build():
             domain.AddProxy(source.SMProxy)
 
             glyph.SetScaleMode = 0
-            glyph.SelectInputScalars = ['0', '0', '0', '0', 'radii']
+            # Look at the documentation of 
+            # vtkAlgorithm::SetInputArrayToProcess() for details.
+            glyph.SelectInputScalars = ['0', '', '', '', 'radii']
 
         else:
             glyph = servermanager.filters.Glyph(Input=input, 
@@ -150,10 +165,32 @@ def build():
 
     def add_tensor_glyph(input, type, resolution=None, name=None, scale=None):
         if version == 4:
-            pass
+            if type == 'Cylinder':
+                source = servermanager.sources.CylinderSource()
+
+                if resolution != None:
+                    source.Resolution = resolution
+
+                if scale != None:
+                    source.Radius = 0.5 * scale
+
+            elif type == 'Box':
+                source = servermanager.sources.CubeSource()
+
+            tensor_glyph = servermanager.filters.TensorGlyph(Input=input,
+                                                             Source=source)
+
+            tensor_glyph.SelectInputTensors = ['0', '', '', '', 'tensors']
+
+            # The specified scalar array is the only array that gets copied.
+            tensor_glyph.SelectInputScalars = ['1', '', '', '', 'colors']
         else:
             tensor_glyph = servermanager.filters.TensorGlyph(Input=input,
                                                              GlyphType=type)
+
+            # The first or the specified vector array is the only array that 
+            # gets copied.
+            tensor_glyph.Vectors = ['POINTS', 'colors_as_vectors']
 
             if resolution != None:
                 tensor_glyph.GlyphType.Resolution = resolution
@@ -171,7 +208,10 @@ def build():
 
     def add_tensor_glyph_with_custom_source(input, source, name=None):
         if version == 4:
-            pass
+            Type = servermanager.filters.TensorGlyphWithCustomSource
+            tensor_glyph = Type(Input=input, Source=source)
+
+            tensor_glyph.SelectInputTensors = ['0', '', '', '', 'tensors']
         else:
             Type = servermanager.filters.TensorGlyphWithCustomSource
             tensor_glyph = Type(Input=input, GlyphType=source)
@@ -192,9 +232,10 @@ def build():
         filter.Initialize()
         filter.Input = tensor_glyph
         filter.Script = """def flatten(input, output):
-    output.ShallowCopy(input)
-    output.GetPointData().GetScalars().SetName('colors')
-    #output.GetPointData().GetVectors().SetName('colors_as_vector')
+    output.ShallowCopy(input) # DeepCopy doesn't copy to tensor_glyph.
+    output.GetPointData().GetArray(0).SetName('colors')
+    # GetScalars() doesn't work in ParaView 3.4.
+    #output.GetPointData().GetScalars().SetName('colors')
 
 input = self.GetInput()
 output = self.GetOutput()
@@ -269,60 +310,59 @@ while not iter.IsDoneWithTraversal():
 
 
     if READERS:
+        global files
         files = add_pvd_reader(simulation_data_directory + '/files.pvd', 
                                'files.pvd')
 
+        global static
         static = add_pvd_reader(simulation_data_directory + '/static.pvd', 
                                 'static.pvd')
 
 
     if PARTICLES:
+        global particle_data
         particle_data = add_extract_block(files, [2], 'b1')
 
         global particles
         particles = add_sphere_glyph(particle_data, name='Particles')
         particles.SetScaleFactor = PARTICLE_RADIUS_SCALE_FACTOR
 
-        rep = show(particles)
-
-        set_color(particles, rep)
+        rep1 = show(particles)
+        set_color(particles, rep1)
 
 
     if SPHERES:
+        global sphere_data
         sphere_data = add_extract_block(files, [4], 'b2')
 
         global spheres
         spheres = add_sphere_glyph(sphere_data, RESOLUTION, name='Spheres')
 
-        rep = show(spheres)
-
-        set_color(spheres, rep)
-        rep.Representation = 'Wireframe'
-        rep.Opacity = 0.5
+        rep2 = show(spheres)
+        set_color(spheres, rep2)
+        rep2.Representation = 'Wireframe'
+        rep2.Opacity = 0.5
 
 
     if CYLINDERS:
+        global cylinder_data
         cylinder_data = add_extract_block(files, [6], 'b3')
 
         global cylinders
         cylinders = add_tensor_glyph(cylinder_data, 'Cylinder', 
                                      resolution=RESOLUTION, name='tg')
 
-        rep = show(cylinders)
-
-        rep.Visibility = 0
         programmable_filter = programmable_filter_color_hack(cylinders,
                                                              name='Cylinders')
-        rep = show(programmable_filter)
-
-        set_color(programmable_filter, rep)
-        rep.Representation = 'Wireframe'
-        rep.Opacity = 1.0
+        rep3 = show(programmable_filter)
+        set_color(programmable_filter, rep3)
+        rep3.Representation = 'Wireframe'
+        rep3.Opacity = 1.0
 
 
     if SURFACES:
         # Cylindrical surfaces.
-        cylindrical_surface_data = add_extract_block(static, [2], 'b1')
+        cylindrical_surface_data = add_extract_block(static, [2], 'b4')
 
         if not HELIX:
             global cylindrical_surfaces
@@ -330,22 +370,25 @@ while not iter.IsDoneWithTraversal():
                 add_tensor_glyph(cylindrical_surface_data, 'Cylinder', 
                                  name='Cylindrical Surfaces',
                                  scale=HELIX_RADIUS_SCALE_FACTOR) 
-            rep = show(cylindrical_surfaces)
-            rep.Representation = 'Wireframe'
-            rep.Opacity = 0.5
+
+            rep4 = show(cylindrical_surfaces)
+            rep4.Representation = 'Wireframe'
+            rep4.Opacity = 0.5
         else:
             helix_file = open(paraview_scripts_directory + '/helix.py', 'r')
+            '''
             if version == 4:
                 #source = ProgrammableFilter()
                 #source.Script = helix_file.read()
                 #servermanager.Register(source) # Needed, or register.
                 pass
             else:
-                helix_source = servermanager.sources.ProgrammableSource()
-                helix_source.Script = 'HELIX_RADIUS_SCALE_FACTOR = ' + \
-                                      str(HELIX_RADIUS_SCALE_FACTOR) + \
-                                      '\n' + helix_file.read()
-                servermanager.Register(helix_source, registrationName='ps')
+            '''
+            helix_source = servermanager.sources.ProgrammableSource()
+            helix_source.Script = 'HELIX_RADIUS_SCALE_FACTOR = ' + \
+                                  str(HELIX_RADIUS_SCALE_FACTOR) + \
+                                  '\n' + helix_file.read()
+            servermanager.Register(helix_source, registrationName='ps')
 
             helix_file.close()
 
@@ -356,8 +399,12 @@ while not iter.IsDoneWithTraversal():
                                                     name='tgwcs')
 
             global double_helix
-            double_helix = \
-                servermanager.filters.GenerateTubes(Input=tensor_glyph)
+            if version == 4:
+                double_helix = \
+                    servermanager.filters.TubeFilter(Input=tensor_glyph)
+            else:
+                double_helix = \
+                    servermanager.filters.GenerateTubes(Input=tensor_glyph)
             servermanager.Register(double_helix,
                                    registrationName='Double Helix')
 
@@ -379,30 +426,31 @@ while not iter.IsDoneWithTraversal():
             # Make double_helix a bit thinner than helix.
             double_helix.Radius = helix_radius / 20
 
-            rep = show(double_helix)
-            rep.ColorArrayName = 'TubeNormals'
+            global rep4
+            rep4 = show(double_helix)
+            rep4.ColorArrayName = 'TubeNormals'
 
 
         # Planar surfaces.
-        planar_surface_data = add_extract_block(static, [4], 'b2')
+        planar_surface_data = add_extract_block(static, [4], 'b5')
         global planar_surfaces
         planar_surfaces = add_tensor_glyph(planar_surface_data, 'Box', 
                                            name='Planar Surfaces')
 
-        rep = show(planar_surfaces)
-        rep.Representation = 'Surface'
-        rep.Opacity = 0.5
+        rep5 = show(planar_surfaces)
+        rep5.Representation = 'Surface'
+        rep5.Opacity = 0.5
 
 
         # Cuboidal surfaces.
-        cuboidal_region_data = add_extract_block(static, [6], 'b3')
+        cuboidal_region_data = add_extract_block(static, [6], 'b6')
         global cuboidal_regions
         cuboidal_regions = add_tensor_glyph(cuboidal_region_data, 'Box',
                                            name='Cuboidal Regions')
 
-        rep = show(cuboidal_regions)
-        rep.Representation = 'Wireframe'
-        rep.Opacity = 1.0
+        rep6 = show(cuboidal_regions)
+        rep6.Representation = 'Wireframe'
+        rep6.Opacity = 1.0
 
 
     # Set camera.

@@ -138,10 +138,24 @@ class VTK_XML_Serial_Unstructured:
             # gets updated actually results in SetInputArrayToProcess to be 
             # called with idx = 1. So by also supplying Paraview with a vector 
             # for each color (just 3 times the color int), the Tensor array 
-            # doesn't get overwritten and GetInputArrayToProcess with idx is 
-            # also happy and updates Scalars (!).
+            # doesn't get overwritten and GetInputArrayToProcess with idx of 1 
+            # is also happy and retrieves the correct scalars.
+
+            # TensorGlyph:
+            # Tensors: 0
+            # Scalars: 1 (but writes to 0 due to bug)
+            # Vectors: 2 (but writes to 1 due to bug)
+
+            # Glyph:
+            # Scalars: 0
+            # Vectors: 1
 
             # Tried to find the root cause using GDB but failed.
+
+            # From a Python script you can use 
+            # SelectInputScalars/Vectors/Tensors with the appropriate idx as 
+            # first argument and all is fine. Not specifying a number ('') is 
+            # equal to '0'.
 
             #Important files:
             #    ParaView3/VTK/Graphics/vtkTensorGlyph.cxx
@@ -149,7 +163,7 @@ class VTK_XML_Serial_Unstructured:
 
             if len(colors) > 0:
                 color_node = doc.createElementNS("VTK", "DataArray")
-                color_node.setAttribute("Name", "colors_as_vector")
+                color_node.setAttribute("Name", "colors_as_vectors")
                 color_node.setAttribute("NumberOfComponents", "3")
                 color_node.setAttribute("type", "Float32")
                 color_node.setAttribute("format", "ascii")
@@ -161,6 +175,7 @@ class VTK_XML_Serial_Unstructured:
                               str(color) + ' '
                 color_data = doc.createTextNode(string)
                 color_node.appendChild(color_data)
+
 
             tensor_node = doc.createElementNS("VTK", "DataArray")
             tensor_node.setAttribute("Name", "tensors")
@@ -176,7 +191,6 @@ class VTK_XML_Serial_Unstructured:
                     string = string + str(value) + ' '
             tensor_data = doc.createTextNode(string)
             tensor_node.appendChild(tensor_data)
-
 
         # Cell data (Dummy).
         cell_data = doc.createElementNS("VTK", "CellData")
