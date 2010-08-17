@@ -228,6 +228,14 @@ class EGFRDSimulatorDnaTestCase(EGFRDSimulatorTestCaseBase):
         for i in range(10):
             self.s.step()
 
+class DimerTestCase(unittest.TestCase):
+    def setUp(self):
+        pass
+
+    def test_one(self):
+        import samples.dimer.dimer
+
+
 
 if __name__ == "__main__":
     unittest.main()

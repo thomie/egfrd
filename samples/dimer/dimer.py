@@ -56,19 +56,23 @@ def profrun():
         else:
             s.step()
 
-PROFMODE = True
+def run():
+    PROFMODE = True
 
-if PROFMODE:
-    try:
-        import cProfile as profile
-    except:
-        import profile
-    profile.run('profrun()', 'fooprof')
-    s.print_report()
+    if PROFMODE:
+        try:
+            import cProfile as profile
+        except:
+            import profile
+        profile.run('profrun()', 'fooprof')
+        s.print_report()
 
-    import pstats
-    pstats.Stats('fooprof').sort_stats('time').print_stats(40)
+        import pstats
+        pstats.Stats('fooprof').sort_stats('time').print_stats(40)
 
-else:
-    profrun()
-    s.print_report()
+    else:
+        profrun()
+        s.print_report()
+
+if __name__ == '__main__':
+    run()
