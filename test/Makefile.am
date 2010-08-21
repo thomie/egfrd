@@ -94,15 +94,15 @@ World_test_SOURCES = World_test.cpp
 
 model_test_SOURCES = model_test.cpp ../Model.cpp ../NetworkRules.cpp ../BasicNetworkRulesImpl.cpp ../SpeciesType.cpp
 
-Vector3_test_SOURCES = Vector3_test.cpp ../Vector3.hpp
+Vector3_test_SOURCES = Vector3_test.cpp
 
-BDPropagator_test_SOURCES = BDPropagator_test.cpp ../BasicNetworkRulesImpl.cpp ../NetworkRules.cpp ../Logger.cpp ../freeFunctions.cpp ../BDPropagator.hpp
+BDPropagator_test_SOURCES = BDPropagator_test.cpp ../BasicNetworkRulesImpl.cpp ../NetworkRules.cpp ../Logger.cpp ../freeFunctions.cpp
 BDPropagator_test_LDADD = $(GSL_LIBS)
 
-range_support_test_SOURCES = range_support_test.cpp ../utils/range.hpp ../utils/range_support.hpp
+range_support_test_SOURCES = range_support_test.cpp
 
-linear_algebra_test_SOURCES = linear_algebra_test.cpp ../linear_algebra.hpp
+linear_algebra_test_SOURCES = linear_algebra_test.cpp
 
-StructureUtils_test_SOURCES = StructureUtils_test.cpp ../StructureUtils.hpp
+StructureUtils_test_SOURCES = StructureUtils_test.cpp
 StructureUtils_test_LDADD = $(GSL_LIBS)
-py_range_converters_test_SOURCES = py_range_converters_test.cpp ../peer/range_converters.hpp 
+py_range_converters_test_SOURCES = py_range_converters_test.cpp

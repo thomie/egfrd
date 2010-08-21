@@ -42,121 +42,6 @@ noinst_PYTHON = \
 
 lib_LTLIBRARIES = _gfrd.la _greens_functions.la
 
-noinst_HEADERS = \
-	abstract_set.hpp\
-	BasicNetworkRulesImpl.hpp\
-	GreensFunction3DRadInf.hpp\
-	BDPropagator.hpp\
-	BDSimulator.hpp\
-	bessel.hpp\
-	Box.hpp\
-	Cylinder.hpp\
-	Defs.hpp\
-	DomainFactory.hpp\
-	Domain.hpp\
-	DomainID.hpp\
-	DynamicPriorityQueue.hpp\
-	EGFRDSimulator.hpp\
-	EventScheduler.hpp\
-	exceptions.hpp\
-	factorial.hpp\
-	filters.hpp\
-	findRoot.hpp\
-	GreensFunction3DAbsSym.hpp\
-	GreensFunction3DAbs.hpp\
-	GreensFunction3DRadAbs.hpp\
-	freeFunctions.hpp\
-	GreensFunction3DSym.hpp\
-	GreensFunction3D.hpp\
-	funcSum.hpp\
-	generator.hpp\
-	geometry.hpp\
-	GreensFunction.hpp\
-	GSLRandomNumberGenerator.hpp\
-	gsl_rng_base.hpp\
-	HalfOrderBesselGenerator.hpp\
-	Identifier.hpp\
-	linear_algebra.hpp\
-	Logger.hpp\
-	MatrixSpace.hpp\
-	Model.hpp\
-	Multi.hpp\
-	NetworkRules.hpp\
-	NetworkRulesWrapper.hpp\
-	PairGreensFunction.hpp\
-	Pair.hpp\
-	ParticleContainerBase.hpp\
-	ParticleContainer.hpp\
-	Particle.hpp\
-	ParticleID.hpp\
-	ParticleSimulator.hpp\
-	Point.hpp\
-	PyEventScheduler.hpp\
-	ReactionRule.hpp\
-	ReactionRuleInfo.hpp\
-	Region.hpp\
-	SerialIDGenerator.hpp\
-	Shape.hpp\
-	Shell.hpp\
-	ShellID.hpp\
-	Single.hpp\
-	sorted_list.hpp\
-	SpeciesInfo.hpp\
-	SpeciesType.cpp\
-	SpeciesType.hpp\
-	SpeciesTypeID.hpp\
-	Sphere.hpp\
-	SphericalBesselGenerator.hpp\
-	SphericalBesselTable.hpp\
-	Structure.hpp\
-	StructureUtils.hpp\
-	Surface.hpp\
-	Transaction.hpp\
-	twofold_container.hpp\
-	Vector3.hpp\
-	World.hpp\
-	peer/numpy/scalar_converters.hpp \
-	peer/numpy/ndarray_converters.hpp \
-	peer/numpy/pyarray_backed_allocator.hpp \
-	peer/numpy/type_mappings.hpp \
-	peer/numpy/wrapped_multi_array.hpp \
-	peer/set_indexing_suite.hpp \
-	peer/compat.h \
-	peer/pickle_support.hpp \
-	peer/converters/sequence.hpp \
-	peer/converters/tuple.hpp \
-	peer/converters/tuple/to_python.hpp \
-	peer/converters/tuple/from_python.hpp \
-	peer/converters/iterator.hpp \
-	peer/converters/generator/to_python.hpp \
-	peer/converters/generator/from_python.hpp \
-	peer/converters/iterator/to_python.hpp \
-	peer/converters/sequence/to_python.hpp \
-	peer/converters/sequence/from_python.hpp \
-	peer/wrappers/range/pyiterable_range.hpp \
-	peer/wrappers/range/stl_container_wrapper.hpp \
-	peer/wrappers/exception/exception_wrapper.hpp \
-	peer/wrappers/generator/pyiterator_generator.hpp \
-	peer/wrappers/generator/generator_wrapper.hpp \
-	peer/wrappers/iterator/pyseq_iterator.hpp \
-	peer/wrappers/iterator/stl_iterator_wrapper.hpp \
-	peer/py_hash_support.hpp \
-	peer/utils.hpp \
-	utils/array_helper.hpp\
-	utils/array_traits.hpp\
-	utils/fun_composition.hpp\
-	utils/fun_wrappers.hpp\
-	utils/get_default_impl.hpp\
-	utils/get_mapper_mf.hpp\
-	utils.hpp\
-	utils/memberwise_compare.hpp\
-	utils/pair.hpp\
-	utils/pointer_preds.hpp\
-	utils/range.hpp\
-	utils/range_support.hpp\
-	utils/reference_or_instance.hpp\
-	utils/unassignable_adapter.hpp
-
 _gfrd_la_CPPFLAGS = -DPY_ARRAY_UNIQUE_SYMBOL=PyArray_API
 
 _gfrd_la_SOURCES=\
@@ -190,18 +75,11 @@ _gfrd_la_LIBADD += $(LIBBOOSTPYTHON) $(LIBBOOSTDATE) $(LIBPYTHON) $(GSL_LIBS)
 _greens_functions_la_LDFLAGS = -module -export-dynamic -avoid-version $(no_undefined)
 _greens_functions_la_LIBADD = $(LIBBOOSTPYTHON) $(LIBBOOSTDATE) $(LIBPYTHON) $(GSL_LIBS)
 
-#nodist__gfrd_la_SOURCES = \
-#	SphericalBesselTable.hpp
-
-nodist__greens_functions_la_SOURCES = \
+CLEANFILES = \
 	SphericalBesselTable.hpp\
 	CylindricalBesselTable.hpp
 
 BUILT_SOURCES = \
-	SphericalBesselTable.hpp\
-	CylindricalBesselTable.hpp
-
-CLEANFILES = \
 	SphericalBesselTable.hpp\
 	CylindricalBesselTable.hpp
 

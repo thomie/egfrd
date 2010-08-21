@@ -7,66 +7,6 @@ AM_CPPFLAGS = @CPPFLAGS@ -DNO_IMPORT
 
 noinst_LTLIBRARIES = libbinding_utils.la
 
-noinst_HEADERS = \
-	BDPropagator.hpp \
-	bd_propagator_class.hpp \
-	Box.hpp \
-	box_class.hpp \
-	binding_common.hpp \
-	Cylinder.hpp \
-	cylinder_class.hpp \
-	CylindricalSurface.hpp \
-	CuboidalRegion.hpp \
-	domain_classes.hpp \
-	domain_id_class.hpp \
-	exception_classes.hpp \
-	Identifier.hpp \
-	matrix_space_classes.hpp \
-	MatrixSpace.hpp \
-	Model.hpp \
-	model_class.hpp \
-	module_functions.hpp \
-	MultiParticleContainer.hpp \
-	multi_particle_container_class.hpp \
-	network_rules_class.hpp \
-	NetworkRules.hpp \
-	network_rules_wrapper_class.hpp \
-	NetworkRulesWrapper.hpp \
-	Pair.hpp \
-	particle_class.hpp \
-	ParticleContainer.hpp \
-	Particle.hpp \
-	particle_id_class.hpp \
-	particle_container_class.hpp \
-	position_converters.hpp \
-	PlanarSurface.hpp \
-	plane_class.hpp \
-	event_classes.hpp \
-	Event.hpp \
-	EventScheduler.hpp \
-	random_number_generator_class.hpp \
-	RandomNumberGenerator.hpp \
-	ReactionRule.hpp \
-	ReactionRuleInfo.hpp \
-	SerialIDGenerator.hpp \
-	shape_converters.hpp \
-	shell_classes.hpp \
-	Shell.hpp \
-	shell_id_class.hpp \
-	Single.hpp \
-	species_id_class.hpp \
-	SpeciesInfo.hpp \
-	species_type_class.hpp \
-	SpeciesType.hpp \
-	Sphere.hpp \
-	sphere_class.hpp \
-	SphericalSurface.hpp \
-	structure_classes.hpp \
-	transaction_classes.hpp \
-	Transaction.hpp \
-	world_class.hpp \
-	World.hpp
-
 libbinding_utils_la_SOURCES = \
 	bd_propagator_class.cpp \
 	box_class.cpp \
