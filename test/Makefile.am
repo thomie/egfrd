@@ -71,7 +71,7 @@ ReactionRule_test.py
 #	$(TESTS_ENVIRONMENT) $(PYTHON) $<
 
 INCLUDES = -I$(top_srcdir) $(PYTHON_INCLUDES)
-AM_CXXFLAGS = @CXXFLAGS@ @GSL_CFLAGS@ -Wall -g
+AM_CXXFLAGS = @CXXFLAGS@ @GSL_CFLAGS@ -Wall -g -Winvalid-pch
 
 check_PROGRAMS = $(CPP_TESTS)
 

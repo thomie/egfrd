@@ -2,7 +2,7 @@ NUMPY_INCLUDE_DIR = @NUMPY_INCLUDE_DIR@
 PYTHON_INCLUDES = @PYTHON_INCLUDES@
 
 INCLUDES = ${PYTHON_INCLUDES} -I${NUMPY_INCLUDE_DIR}
-AM_CXXFLAGS = @CXXFLAGS@ @GSL_CFLAGS@ -I.. -Wall -g -Wstrict-aliasing=0 -Wno-invalid-offsetof
+AM_CXXFLAGS = @CXXFLAGS@ @GSL_CFLAGS@ -I.. -Wall -g -Wstrict-aliasing=0 -Wno-invalid-offsetof -Winvalid-pch
 AM_CPPFLAGS = @CPPFLAGS@ -DNO_IMPORT
 
 noinst_LTLIBRARIES = libbinding_utils.la
