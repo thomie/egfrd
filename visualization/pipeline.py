@@ -293,12 +293,14 @@ class Pipeline(object):
 
             static = self.add_pvd_reader(static_pvd_path, 'static.pvd')
 
+            '''
             if version > 4: 
                 self.annTime = self.simple.AnnotateTimeFilter(files)
                 self.annTime.Format = '%.2f s'
                 rep = self.show(self.annTime)
                 #rep.WindowLocation
                 rep.FontSize = 12
+            '''
 
         if PARTICLES:
             particle_data = self.add_extract_block(files, [2], 'b1')
@@ -321,7 +323,7 @@ class Pipeline(object):
             rep2 = self.show(spheres)
             self.set_color(spheres, rep2, color_map=MakeNiceLT)
             rep2.Representation = 'Wireframe'
-            rep2.Opacity = 0.25
+            #rep2.Opacity = 0.25
 
 
         if CYLINDERS:
@@ -334,10 +336,11 @@ class Pipeline(object):
 
             programmable_filter = self.add_color_hack(cylinders,
                                                       name='Cylinders')
-            rep3 = self.show(programmable_filter)
-            self.set_color(programmable_filter, rep3, color_map=MakeNiceLT)
-            rep3.Representation = 'Wireframe'
-            rep3.Opacity = 1.0
+            self.rep3 = self.show(programmable_filter)
+            self.set_color(programmable_filter, self.rep3, color_map=MakeNiceLT)
+            self.rep3.Representation = 'Wireframe'
+            self.rep3.LineWidth = 10  # Should be >= 1
+            #self.rep3.Opacity = 1.0
 
 
         if SURFACES:
@@ -353,7 +356,7 @@ class Pipeline(object):
 
                 rep4 = self.show(cylindrical_surfaces)
                 rep4.Representation = 'Wireframe'
-                rep4.Opacity = 0.5
+                #rep4.Opacity = 0.5
             else:
                 helix_path = scripts_dir + '/helix.py'
                 assert os.path.isfile(helix_path), \
@@ -372,17 +375,17 @@ class Pipeline(object):
                 tensor_glyph = self.add_tensor_glyph_with_custom_source(
                         cylindrical_surface_data, helix_source, name='tgwcs')
                 if version == 4:
-                    double_helix = \
+                    self.double_helix = \
                         servermanager.filters.TubeFilter(Input=tensor_glyph)
                 else:
                     try:
-                        double_helix = servermanager.filters.GenerateTubes(     
+                        self.double_helix = servermanager.filters.GenerateTubes(     
                                 Input=tensor_glyph)
                     except AttributeError:
                         # ParaView 3.8.
-                        double_helix = \
+                        self.double_helix = \
                             servermanager.filters.Tube(Input=tensor_glyph)
-                servermanager.Register(double_helix,
+                servermanager.Register(self.double_helix,
                                        registrationName='Double Helix')
 
                 # Compute helix radius.
@@ -401,13 +404,17 @@ class Pipeline(object):
                                cylindrical_surface_radius
 
                 # Make double_helix a bit thinner than helix.
-                double_helix.Radius = helix_radius / 20
+                self.double_helix.Radius = helix_radius / 15
 
-                rep4 = self.show(double_helix)
-                self.set_color(double_helix, rep4, color_map=MakeCoolToWarmLT,
+                self.double_helix.NumberofSides = self.resolution
+
+                rep4 = self.show(self.double_helix)
+                self.set_color(self.double_helix, rep4,
+                               color_map=MakeCoolToWarmLT,
                                color_array_name='TubeNormals')
 
 
+            '''
             # Planar surfaces.
             planar_surface_data = self.add_extract_block(static, [4], 'b5')
             planar_surfaces = self.add_tensor_glyph(planar_surface_data, 'Box', 
@@ -415,10 +422,12 @@ class Pipeline(object):
 
             rep5 = self.show(planar_surfaces)
             rep5.Representation = 'Surface'
-            rep5.Opacity = 0.5
-            rep5.Opacity = 0.5
+            #rep5.Opacity = 0.5
+            #rep5.Opacity = 0.5
+            '''
 
 
+            '''
             # Cuboidal surfaces.
             cuboidal_region_data = self.add_extract_block(static, [6], 'b6')
             cuboidal_regions = self.add_tensor_glyph(cuboidal_region_data,
@@ -427,7 +436,7 @@ class Pipeline(object):
 
             rep6 = self.show(cuboidal_regions)
             rep6.Representation = 'Wireframe'
-            rep6.Opacity = 1.0
+            #rep6.Opacity = 1.0
             rep6.LineWidth = 2 #1
 
             if DARK_BACKGROUND:
@@ -439,16 +448,20 @@ class Pipeline(object):
                 rep6.Color = color
             else:
                 rep6.AmbientColor = color
+            '''
 
 
         # Set camera.
-        cam = rv.GetActiveCamera()
+        self.cam = rv.GetActiveCamera()
         # Sets focalpoint to center of box.
         rv.ResetCamera()
-        cam.SetViewUp(0,0,1)
-        focal = cam.GetFocalPoint()
+        self.cam.SetViewUp(0,0,1)
+        focal = self.cam.GetFocalPoint()
         # Straigh in front of box.
-        cam.SetPosition(focal[0]*10, focal[1], focal[2])
+        #self.cam.SetPosition(44.56575610189131, 100.00286320295511, 52.757627199316325)
+        #self.cam.SetFocalPoint(44.97613636027846, 99.025656543968182, 52.659898494193669)
+        self.cam.SetPosition(44.679768364486293, 89.661311587564342, 51.694284159338146)
+        self.cam.SetFocalPoint(44.693248884479189, 89.622044517807041, 51.690802280636177)
 
         if DARK_BACKGROUND:
             rv.Background = [0, 0, 0] # Black.
@@ -456,7 +469,7 @@ class Pipeline(object):
             rv.Background = [1, 1, 1] # White.
 
         # Changes cam.GetPosition() only by zooming in/out.
-        rv.ResetCamera()
+        #rv.ResetCamera()
         rv.StillRender()
 
     def add_pvd_reader(self, file, name):

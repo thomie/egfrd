@@ -452,7 +452,7 @@ class VTKLogger:
                      tensor_list=[], tensor=None):
         # Helper method.
 
-        factor = 1
+        factor = 1e8
         pos_list.append(pos * factor)
 
         # Multiply radii and tensors by 2 because ParaView sets radius 
