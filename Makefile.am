@@ -1,199 +1,79 @@
+SUBDIRS = doc binding test
+
+
+# BESSEL TABLES
+# Built the Bessel tables before they are needed
+# Manually recording dependencies instead of using BUILT_SOURCES is faster
+SphericalBesselGenerator.lo : SphericalBesselTable.hpp
+
+SphericalBesselTable.hpp: make_sjy_table.py
+	@PYTHON@ make_sjy_table.py SphericalBesselTable.hpp
+
+CylindricalBesselGenerator.lo : CylindricalBesselTable.hpp
+
+CylindricalBesselTable.hpp: make_cjy_table.py
+	@PYTHON@ make_cjy_table.py CylindricalBesselTable.hpp
+
+
+# BUILT
+# Make libtool static libraries first
+noinst_LTLIBRARIES = \
+	lib_gfrd.la\
+	lib_greens_functions.la
+
+# Install dlopenable modules in pyexecdir
+pkgpyexec_LTLIBRARIES = \
+	_gfrd.la\
+	_greens_functions.la
+
+all-local: \
+	_gfrd.so \
+	_greens_functions.so 
+
+_gfrd.so: _gfrd.la 
+	ln -sf .libs/_gfrd.so ./_gfrd.so
+
+_greens_functions.so: _greens_functions.la
+	ln -sf .libs/_greens_functions.so ./_greens_functions.so
+
+
+# FLAGS and LIBS
 ACLOCAL_AMFLAGS=-I m4
 
-SUBDIRS = binding doc test 
+AM_CPPFLAGS = @PYTHON_INCLUDES@ -I@NUMPY_INCLUDE_DIR@ @BOOST_CPPFLAGS@
 
-TOPSRCDIR = ${top_srcdir}
+AM_CXXFLAGS = @GSL_CFLAGS@ 
 
-LTDL_SHLIB_EXT = @LTDL_SHLIB_EXT@
+lib_greens_functions_la_LIBADD = $(GSL_LIBS)
 
-PYTHON = @PYTHON@
-PYTHON_PREFIX = @PYTHON_PREFIX@
-PYTHON_VERSION = @PYTHON_VERSION@
+# dlopenable modules are wrappers around static libraries
+_gfrd_la_LIBADD = binding/libbinding_utils.la lib_gfrd.la lib_greens_functions.la $(GSL_LIBS) 
 
-NUMPY_INCLUDE_DIR=@NUMPY_INCLUDE_DIR@
-PYTHON_INCLUDES = @PYTHON_INCLUDES@
+_greens_functions_la_LIBADD = lib_greens_functions.la
 
-pkgpyexecdir = @pkgpyexecdir@
+_gfrd_la_LDFLAGS = -export-dynamic -module -avoid-version $(no_undefined)
 
-LIBPYTHON = -lpython$(PYTHON_VERSION)
-
-INCLUDES = ${PYTHON_INCLUDES} -I${NUMPY_INCLUDE_DIR}
-AM_CXXFLAGS = @CXXFLAGS@ @GSL_CFLAGS@
-LIBBOOSTPYTHON = -l@BOOST_PYTHON_LIBNAME@
-LIBBOOSTDATE = -l@BOOST_DATE_TIME_LIBNAME@
-LIBBOOSTREGEX = -l@BOOST_REGEX_LIBNAME@
-
-CFLAGS = @GSL_CFLAGS@ @BOOST_CPPFLAGS@
-
-PYCHECKER = @PYCHECKER@
-PYCHECKER_FLAGS = --limit 0 
-
-noinst_PYTHON = \
-	bd.py\
-	gfrdbase.py\
-	logger.py\
-	gfrdbase.py\
-	utils.py\
-	egfrd.py\
-	gfrd.py\
-	surface.py\
-	single.py\
-	dimer.py  
+_greens_functions_la_LDFLAGS = -export-dynamic -module -avoid-version $(no_undefined)
 
 
-lib_LTLIBRARIES = _gfrd.la _greens_functions.la
-
-noinst_HEADERS = \
-	abstract_set.hpp\
-	BasicNetworkRulesImpl.hpp\
-	GreensFunction3DRadInf.hpp\
-	BDPropagator.hpp\
-	BDSimulator.hpp\
-	bessel.hpp\
-	Box.hpp\
-	ConsoleAppender.hpp\
-	Cylinder.hpp\
-	Defs.hpp\
-	DomainFactory.hpp\
-	Domain.hpp\
-	DomainID.hpp\
-	DynamicPriorityQueue.hpp\
-	EGFRDSimulator.hpp\
-	EventScheduler.hpp\
-	exceptions.hpp\
-	factorial.hpp\
-	filters.hpp\
-	findRoot.hpp\
-	GreensFunction1DRadAbs.hpp\
-	GreensFunction1DAbsAbs.hpp\
-	GreensFunction3DAbsSym.hpp\
-	GreensFunction3DAbs.hpp\
-	GreensFunction3DRadAbs.hpp\
-	GreensFunction3DRadAbsBase.hpp\
-	freeFunctions.hpp\
-	GreensFunction3DSym.hpp\
-	GreensFunction3D.hpp\
-	funcSum.hpp\
-	generator.hpp\
-	geometry.hpp\
-	GreensFunction.hpp\
-	GSLRandomNumberGenerator.hpp\
-	gsl_rng_base.hpp\
-	HalfOrderBesselGenerator.hpp\
-	Identifier.hpp\
-	linear_algebra.hpp\
-	Logger.hpp\
-	MatrixSpace.hpp\
-	Model.hpp\
-	Multi.hpp\
-	NetworkRules.hpp\
-	NetworkRulesWrapper.hpp\
-	PairGreensFunction.hpp\
-	Pair.hpp\
-	ParticleContainerBase.hpp\
-	ParticleContainer.hpp\
-	Particle.hpp\
-	ParticleID.hpp\
-	ParticleSimulator.hpp\
-	Point.hpp\
-	PyEventScheduler.hpp\
-	ReactionRule.hpp\
-	ReactionRuleInfo.hpp\
-	Region.hpp\
-	SerialIDGenerator.hpp\
-	Shape.hpp\
-	Shell.hpp\
-	ShellID.hpp\
-	Single.hpp\
-	sorted_list.hpp\
-	SpeciesInfo.hpp\
-	SpeciesType.cpp\
-	SpeciesType.hpp\
-	SpeciesTypeID.hpp\
-	Sphere.hpp\
-	SphericalBesselGenerator.hpp\
-	SphericalBesselTable.hpp\
-	Structure.hpp\
-	StructureUtils.hpp\
-	StructureType.hpp\
-	Surface.hpp\
-	Transaction.hpp\
-	twofold_container.hpp\
-	Vector3.hpp\
-	World.hpp\
-	peer/numpy/scalar_converters.hpp \
-	peer/numpy/ndarray_converters.hpp \
-	peer/numpy/pyarray_backed_allocator.hpp \
-	peer/numpy/type_mappings.hpp \
-	peer/numpy/wrapped_multi_array.hpp \
-	peer/set_indexing_suite.hpp \
-	peer/compat.h \
-	peer/pickle_support.hpp \
-	peer/converters/sequence.hpp \
-	peer/converters/tuple.hpp \
-	peer/converters/tuple/to_python.hpp \
-	peer/converters/tuple/from_python.hpp \
-	peer/converters/iterator.hpp \
-	peer/converters/generator/to_python.hpp \
-	peer/converters/generator/from_python.hpp \
-	peer/converters/iterator/to_python.hpp \
-	peer/converters/sequence/to_python.hpp \
-	peer/converters/sequence/from_python.hpp \
-	peer/wrappers/range/pyiterable_range.hpp \
-	peer/wrappers/range/stl_container_wrapper.hpp \
-	peer/wrappers/exception/exception_wrapper.hpp \
-	peer/wrappers/generator/pyiterator_generator.hpp \
-	peer/wrappers/generator/generator_wrapper.hpp \
-	peer/wrappers/iterator/pyseq_iterator.hpp \
-	peer/wrappers/iterator/stl_iterator_wrapper.hpp \
-	peer/py_hash_support.hpp \
-	peer/utils.hpp \
-	utils/array_helper.hpp\
-	utils/array_traits.hpp\
-	utils/fun_composition.hpp\
-	utils/fun_wrappers.hpp\
-	utils/get_default_impl.hpp\
-	utils/get_mapper_mf.hpp\
-	utils.hpp\
-	utils/memberwise_compare.hpp\
-	utils/pair.hpp\
-	utils/pointer_preds.hpp\
-	utils/range.hpp\
-	utils/range_support.hpp\
-	utils/reference_or_instance.hpp\
-	utils/unassignable_adapter.hpp
-
-_gfrd_la_CPPFLAGS = -DPY_ARRAY_UNIQUE_SYMBOL=PyArray_API
-
-_gfrd_la_SOURCES=\
+# SOURCES
+# If a .cpp files is needed by both _gfrd and _greens_functions, supply it to 
+# the latter, because _greens_functions will be linked in with _gfrd.
+lib_gfrd_la_SOURCES=\
 	BasicNetworkRulesImpl.cpp\
-	findRoot.cpp\
-	freeFunctions.cpp\
-	funcSum.cpp\
-	GreensFunction3DAbs.cpp\
-	GreensFunction3DAbsSym.cpp\
-	GreensFunction3D.cpp\
-	GreensFunction3DRadAbsBase.cpp\
-	GreensFunction3DRadAbs.cpp\
-	GreensFunction3DRadInf.cpp\
-	GreensFunction3DSym.cpp\
-	Logger.cpp\
-	ConsoleAppender.cpp\
 	Model.cpp\
 	NetworkRules.cpp\
 	ParticleModel.cpp\
 	pyGFRD.cpp\
 	SpeciesType.cpp\
-	SphericalBesselGenerator.cpp\
 	StructureType.cpp\
 	utils.cpp
 
-_greens_functions_la_SOURCES=\
+lib_greens_functions_la_SOURCES=\
+	ConsoleAppender.cpp\
 	findRoot.cpp\
-	funcSum.cpp\
-	greens_functions.cpp\
-	SphericalBesselGenerator.cpp\
 	freeFunctions.cpp\
+	funcSum.cpp\
 	GreensFunction1DAbsAbs.cpp\
 	GreensFunction1DRadAbs.cpp\
 	GreensFunction3DSym.cpp\
@@ -203,59 +83,116 @@ _greens_functions_la_SOURCES=\
 	GreensFunction3DRadAbsBase.cpp\
 	GreensFunction3DRadAbs.cpp\
 	GreensFunction3DAbs.cpp\
+	greens_functions.cpp\
 	Logger.cpp\
-	ConsoleAppender.cpp
+	SphericalBesselGenerator.cpp
 
-_gfrd_la_LDFLAGS = -module -export-dynamic -avoid-version $(no_undefined)
-_gfrd_la_LIBADD = binding/libbinding_utils.la
-_gfrd_la_LIBADD += $(LIBBOOSTPYTHON) $(LIBBOOSTDATE) $(LIBPYTHON) $(GSL_LIBS)
+_gfrd_la_SOURCES=
 
-_greens_functions_la_LDFLAGS = -module -export-dynamic -avoid-version $(no_undefined)
-_greens_functions_la_LIBADD = $(LIBBOOSTPYTHON) $(LIBBOOSTDATE) $(LIBPYTHON) $(GSL_LIBS)
+_greens_functions_la_SOURCES=
 
-#nodist__gfrd_la_SOURCES = \
-#	SphericalBesselTable.hpp
-
-nodist__greens_functions_la_SOURCES = \
-	SphericalBesselTable.hpp\
-	CylindricalBesselTable.hpp
-
-BUILT_SOURCES = \
-	SphericalBesselTable.hpp\
-	CylindricalBesselTable.hpp
-
-CLEANFILES = \
-	SphericalBesselTable.hpp\
-	CylindricalBesselTable.hpp
-
-SphericalBesselTable.hpp: make_sjy_table.py
-	$(PYTHON) make_sjy_table.py SphericalBesselTable.hpp
-
-CylindricalBesselTable.hpp: make_cjy_table.py
-	$(PYTHON) make_cjy_table.py CylindricalBesselTable.hpp
+nobase_pkgpython_PYTHON = \
+	__init__.py\
+	bd.py\
+	constants.py\
+	dumper.py\
+	egfrd.py\
+	gfrdbase.py\
+	gillespie.py\
+	greens_function_wrapper.py\
+	logger.py\
+	model.py\
+	multi.py\
+	myrandom.py\
+	pair.py\
+	single.py\
+	utils.py\
+	visualization/helix.py\
+	visualization/__init__.py\
+	visualization/pipeline.py\
+	visualization/vtklogger.py\
+	visualization/vtk_xml_serial_unstructured.py
 
 
-_gfrd.so: _gfrd.la 
-	ln -sf .libs/_gfrd.so ./_gfrd.so
-
-_greens_functions.so: _greens_functions.la
-	ln -sf .libs/_greens_functions.so ./_greens_functions.so
-
-all-local: _gfrd.so _greens_functions.so
-
-clean-local:
-	rm -f _gfrd.so _greens_functions.so
-
-
+# CHECK
+# Note: there is no macro for @PYCHECKER@ in configure.ac.
+PYCHECKER = @PYCHECKER@ --limit 0 
 pycheck:
-	$(PYCHECKER) $(PYCHECKER_FLAGS) $(top_srcdir)/egfrd.py
+	$(PYCHECKER) $(top_srcdir)/egfrd.py
 
 
-dist-hook:
-	rm -rf `find $(distdir)/samples -name '.svn'`
+# INSTALL
+# Install samples in docdir
+# Note: nobase_doc_DATA can not handle directories recursively
+install-data-local: distclean-local
+	@$(NORMAL_INSTALL)
+	for FILE in `find samples -type f`; do \
+	  $(INSTALL_DATA) -D $$FILE $(DESTDIR)$(docdir)/$$FILE; \
+	done
 
+
+# UNINSTALL
+# Uninstall samples
+uninstall-local:
+	@$(NORMAL_UNINSTALL)
+	rm -rf $(DESTDIR)$(docdir)/samples
+
+
+# DIST
+dist_pkgpython_DATA = \
+	visualization/tensorGlyph.xml \
+	visualization/tensorGlyphWithCustomSource.xml
+
+# The only reason to list the headers is for distribution.
+nobase_noinst_HEADERS = \
+	*.hpp\
+	compat.h\
+	peer/compat.h\
+	peer/converters/generator/*.hpp\
+	peer/converters/*.hpp\
+	peer/converters/iterator/*.hpp\
+	peer/converters/sequence/*.hpp\
+	peer/converters/tuple/*.hpp\
+	peer/*.hpp\
+	peer/numpy/*.hpp\
+	peer/util/*.hpp\
+	peer/wrappers/exception/*.hpp\
+	peer/wrappers/generator/*.hpp\
+	peer/wrappers/iterator/*.hpp\
+	peer/wrappers/range/*.hpp\
+	utils/*.hpp
 
 EXTRA_DIST = \
 	autogen.sh\
-	samples\
-	make_sjy_table.py
+	CylindricalBesselGenerator.cpp\
+	datafile.py\
+	gui\
+	.hgignore\
+	legacy.py\
+	make_cjy_table.py\
+	make_sjy_table.py\
+	misc\
+	samples
+
+# Remove these files from temp directory just before .tar.gz is created.
+# (nodist__gfrd_la_SOURCES doesn't work because of *.hpp in HEADERS)
+dist-hook:
+	rm -f $(distdir)/samples/benchmark/Makefile
+	rm -rf $(distdir)/samples/benchmark/.deps
+	rm -f $(distdir)/SphericalBesselTable.hpp
+	rm -f $(distdir)/CylindricalBesselTable.hpp
+
+
+# CLEAN
+CLEANFILES = \
+	_gfrd.so\
+	_greens_functions.so\
+	CylindricalBesselTable.hpp\
+	SphericalBesselTable.hpp
+
+cleanless:
+	rm -f *.so *.la .libs/*.so .libs/*.la
+
+distclean-local:
+	rm -rf samples/benchmark/Makefile samples/benchmark/.deps
+

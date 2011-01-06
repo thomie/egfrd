@@ -1,11 +1,10 @@
 AC_REVISION([$Id$])
 dnl
 dnl
-AC_INIT
+AC_INIT([epdp],[0.3b])
 AC_CONFIG_SRCDIR([autogen.sh])
 dnl
-AC_DISABLE_STATIC
-AM_PROG_LIBTOOL
+LT_INIT([disable-static]) 
 dnl AC_CONFIG_AUX_DIR()
 dnl
 dnl 
@@ -14,7 +13,17 @@ AH_TEMPLATE(HAVE_INLINE)
 dnl 
 dnl
 AC_CANONICAL_TARGET([])
-AM_INIT_AUTOMAKE([epdp],[0.3b])
+
+dnl
+dnl Report dubious instructions in Makefile.am.
+AM_INIT_AUTOMAKE([-Wall]) dnl -Werror])
+
+dnl Use ./configure --disable-silent-rules or make V=1 to get a more verbose
+dnl build.
+AM_SILENT_RULES([yes])
+
+dnl prevent _gfrd.so: undefined symbol: PyArray_API
+AC_DEFINE([PY_ARRAY_UNIQUE_SYMBOL], [PyArray_API], [prevent _gfrd.so: undefined symbol: PyArray_API])
 
 dnl Check pdflatex
 AC_PROG_PDFLATEX()
@@ -38,14 +47,13 @@ dnl
 AC_CHECK_LIB(python${PYTHON_VERSION},main,,AC_MSG_ERROR([could not find libpython.]))
 dnl
 AC_PROG_CXX
-AC_LANG_CPLUSPLUS
+AC_LANG([C++])
 dnl
 dnl
 
 DEBUG=
 AC_ARG_ENABLE([debug],
-  AC_HELP_STRING([--enable-debug],
-                 [inhibit any optimization options]),
+  AS_HELP_STRING([--enable-debug],[inhibit any optimization options]),
   [ DEBUG=1 ]
 )
 
@@ -70,9 +78,8 @@ AX_BOOST_BASE([1.37],,AC_MSG_ERROR([could not find required version of BOOST.]))
 BOOST_PYTHON_LIBNAME=boost_python
 
 AC_ARG_WITH(boost-python-libname,
-  AC_HELP_STRING([--with-boost-python-libname=LIBNAME],
-                 [specify the library name of Boost.Python [[boost_python]]]
-                ),
+  AS_HELP_STRING([--with-boost-python-libname=LIBNAME],[specify the library name of Boost.Python [[boost_python]]
+                ]),
   [BOOST_PYTHON_LIBNAME=$withval]
 )
 AC_CHECK_LIB($BOOST_PYTHON_LIBNAME,main,,AC_MSG_ERROR([could not find libboost_python.]),-lpython${PYTHON_VERSION})
@@ -81,9 +88,8 @@ AC_SUBST(BOOST_PYTHON_LIBNAME)
 BOOST_DATE_TIME_LIBNAME=boost_date_time
 
 AC_ARG_WITH(boost-date_time-libname,
-  AC_HELP_STRING([--with-boost-date-time-libname=LIBNAME],
-                 [specify the library name of Boost.Python [[boost_date_time]]]
-                ),
+  AS_HELP_STRING([--with-boost-date-time-libname=LIBNAME],[specify the library name of Boost.Python [[boost_date_time]]
+                ]),
   [BOOST_DATE_TIME_LIBNAME=$withval]
 )
 AC_CHECK_LIB($BOOST_DATE_TIME_LIBNAME,main,,AC_MSG_ERROR([could not find libboost_date_time.]))
@@ -92,9 +98,8 @@ AC_SUBST(BOOST_DATE_TIME_LIBNAME)
 BOOST_REGEX_LIBNAME=boost_regex
 
 AC_ARG_WITH(boost-regex-libname,
-  AC_HELP_STRING([--with-boost-date-time-libname=LIBNAME],
-                 [specify the library name of Boost.Python [[boost_regex]]]
-                ),
+  AS_HELP_STRING([--with-boost-date-time-libname=LIBNAME],[specify the library name of Boost.Python [[boost_regex]]
+                ]),
   [BOOST_REGEX_LIBNAME=$withval]
 )
 AC_CHECK_LIB($BOOST_REGEX_LIBNAME,main,,AC_MSG_ERROR([could not find libboost_regex.]))
@@ -128,20 +133,19 @@ dnl
 dnl
 AC_CHECK_HEADERS([unordered_map boost/unordered_map.hpp boost/functional/hash.hpp])
 AC_CHECK_HEADER([tr1/unordered_map], [
-  AC_LANG_SAVE
-  AC_LANG_CPLUSPLUS
+  AC_LANG_PUSH([C++])
   AC_MSG_CHECKING([for a stupid bug in tr1/unordered_map])
-  AC_TRY_COMPILE([
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include <tr1/unordered_map>
-  ], [
+  ]], [[
 std::tr1::unordered_map<int, int> a, b(a);
-  ], [
+  ]])],[
     AC_MSG_RESULT([ok])
     AC_DEFINE([HAVE_TR1_UNORDERED_MAP], 1, [Define to 1 if you have usable <tr1/unordered_map> header file])
-  ], [
+  ],[
     AC_MSG_RESULT([buggy])
   ])
-  AC_LANG_RESTORE
+  AC_LANG_POP([C++])
 ], [
   AC_MSG_RESULT([buggy])
 ])
@@ -198,6 +202,6 @@ dnl
 dnl
 dnl no checks for system services
 dnl
-AM_CONFIG_HEADER([config.h])
+AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile binding/Makefile test/Makefile doc/Makefile samples/benchmark/Makefile])
-AC_OUTPUT([])
+AC_OUTPUT
