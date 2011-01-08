@@ -2,7 +2,7 @@
 #define BINDING_COMMON_EGFRD_SIMULATOR_TRAITS
 
 #include "binding_common_World.hpp"
-#include "../EGFRDSimulator.hpp"
+#include "../EGFRDSimulatorTraits.hpp"
 
 namespace binding {
 
