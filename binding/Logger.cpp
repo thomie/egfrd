@@ -4,9 +4,10 @@
 
 #include <boost/python.hpp>
 #include "peer/util/shared_const_ptr.hpp"
-#include "binding_common.hpp"
+#include "../Logger.hpp"
 
 namespace binding {
+typedef ::Logger Logger;
 
 boost::python::objects::class_base
 register_logger_class(char const* name)

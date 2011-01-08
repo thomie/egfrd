@@ -1,13 +1,17 @@
+#include "binding_common_WorldTraits.hpp"
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif /* HAVE_CONFIG_H */
 
-#include "binding_common.hpp"
 #include "../SpeciesType.hpp"
 #include "SpeciesType.hpp"
 #include "peer/utils.hpp"
 
+
 namespace binding {
+typedef WorldTraits::species_id_type SpeciesID;
+typedef ::Model Model;
 
 static boost::python::object species_type_class;
 

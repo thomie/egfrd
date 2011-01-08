@@ -3,9 +3,10 @@
 #endif /* HAVE_CONFIG_H */
 
 #include "ParticleModel.hpp"
-#include "binding_common.hpp"
+#include "../ParticleModel.hpp"
 
 namespace binding {
+typedef ::ParticleModel ParticleModel;
 
 void register_particle_model_class()
 {

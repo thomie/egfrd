@@ -2,10 +2,15 @@
 #include <config.h>
 #endif /* HAVE_CONFIG_H */
 
-#include "binding_common.hpp"
+#include <exception>
+#include <stdexcept>
 #include "peer/wrappers/exception/exception_wrapper.hpp"
+#include "../exceptions.hpp"
 
 namespace binding {
+typedef ::not_found NotFound;
+typedef ::already_exists AlreadyExists;
+typedef ::illegal_state IllegalState;
 
 void register_exception_classes()
 {

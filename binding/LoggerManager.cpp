@@ -4,9 +4,12 @@
 
 #include <boost/python.hpp>
 #include "peer/converters/sequence.hpp"
-#include "binding_common.hpp"
+#include "../Logger.hpp"
 
 namespace binding {
+typedef ::LoggerManager LoggerManager;
+typedef ::Logger Logger;
+typedef ::LogAppender LogAppender;
 
 boost::python::objects::enum_base
 register_logger_level_enum(char const* name)

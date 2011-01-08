@@ -6,9 +6,10 @@
 #include <cstdio>
 #include <boost/foreach.hpp>
 #include "PythonAppender.hpp"
-#include "binding_common.hpp"
+#include "../Logger.hpp"
 
 namespace binding {
+typedef ::Logger Logger;
 
 typedef std::map<enum Logger::level, boost::python::object> loglevel_map_type;
 

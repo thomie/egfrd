@@ -4,9 +4,10 @@
 
 #include "RandomNumberGenerator.hpp"
 #include "../gsl_rng_base.hpp"
-#include "binding_common.hpp"
+#include "../GSLRandomNumberGenerator.hpp"
 
 namespace binding {
+typedef ::GSLRandomNumberGenerator GSLRandomNumberGenerator;
 
 struct static_gsl_rng: public gsl_rng_base<static_gsl_rng>
 {

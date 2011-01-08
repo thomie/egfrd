@@ -4,8 +4,8 @@
 
 #include "Identifier.hpp"
 #include "SerialIDGenerator.hpp"
-#include "binding_common.hpp"
 #include "peer/utils.hpp"
+#include "../ParticleID.hpp"
 
 namespace binding {
 

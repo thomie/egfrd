@@ -1,15 +1,20 @@
+#include "binding_common_EGFRDSimulatorTraits.hpp"
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif /* HAVE_CONFIG_H */
 
 #include <boost/python.hpp>
 #include "peer/wrappers/range/stl_container_wrapper.hpp"
-#include "binding_common.hpp"
 #include "NetworkRulesWrapper.hpp"
 #include "ReactionRuleInfo.hpp"
 #include "SpeciesInfo.hpp"
 
 namespace binding {
+typedef WorldTraits::species_id_type SpeciesID;
+typedef WorldTraits::species_type SpeciesInfo;
+typedef EGFRDSimulatorTraits::reaction_rule_type ReactionRuleInfo;
+typedef EGFRDSimulatorTraits::network_rules_type NetworkRulesWrapper;
 
 static boost::python::object species_info_class;
 

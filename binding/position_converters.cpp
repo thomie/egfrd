@@ -1,3 +1,5 @@
+#include "binding_common_WorldTraits.hpp"
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif /* HAVE_CONFIG_H */
@@ -7,9 +9,9 @@
 #include "peer/numpy/ndarray_converters.hpp"
 #include "peer/numpy/wrapped_multi_array.hpp"
 
-#include "binding_common.hpp"
 
 namespace binding {
+typedef WorldTraits::position_type Position;
 
 typedef peer::util::detail::array_to_ndarray_converter<
     WorldTraits::position_type,

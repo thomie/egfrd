@@ -1,12 +1,18 @@
+#include "binding_common_EGFRDSimulator.hpp"
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif /* HAVE_CONFIG_H */
 
 #include <boost/python.hpp>
 #include <boost/python/docstring_options.hpp>
-#include "binding_common.hpp"
+#include "../StructureUtils.hpp"
 
 namespace binding {
+typedef WorldTraits::structure_type Structure;
+typedef WorldTraits::length_type Length;
+typedef WorldTraits::position_type Position;
+typedef ::StructureUtils<EGFRDSimulator> StructureUtils;
 
 static Position 
 calculate_pair_CoM(Position const& p1, 

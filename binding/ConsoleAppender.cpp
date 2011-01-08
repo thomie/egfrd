@@ -4,7 +4,6 @@
 
 #include <boost/python.hpp>
 #include "peer/util/to_native_converter.hpp"
-#include "binding_common.hpp"
 #include "../ConsoleAppender.hpp"
 
 namespace binding {

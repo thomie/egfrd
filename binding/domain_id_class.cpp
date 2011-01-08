@@ -1,12 +1,14 @@
+#include "binding_common_EGFRDSimulatorTraits.hpp"
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif /* HAVE_CONFIG_H */
 
 #include "Identifier.hpp"
 #include "SerialIDGenerator.hpp"
-#include "binding_common.hpp"
 
 namespace binding {
+typedef EGFRDSimulatorTraits::domain_id_type DomainID;
 
 void register_domain_id_class()
 {

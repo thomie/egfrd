@@ -1,9 +1,12 @@
+#include "binding_common_EGFRDSimulator.hpp"
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif /* HAVE_CONFIG_H */
 
 #include "Domain.hpp"
 #include "ShapedDomain.hpp"
+#include "../ShapedDomain.hpp"
 #include "Single.hpp"
 #include "Pair.hpp"
 #include "SphericalSingle.hpp"
@@ -11,9 +14,17 @@
 #include "SphericalPair.hpp"
 #include "CylindricalPair.hpp"
 #include "Multi.hpp"
-#include "binding_common.hpp"
 
 namespace binding {
+typedef ::ShapedDomain<EGFRDSimulatorTraits> ShapedDomain;
+typedef EGFRDSimulator::domain_type Domain;
+typedef EGFRDSimulator::spherical_single_type::base_type Single;
+typedef EGFRDSimulator::spherical_pair_type::base_type Pair;
+typedef EGFRDSimulator::spherical_single_type SphericalSingle;
+typedef EGFRDSimulator::cylindrical_single_type CylindricalSingle;
+typedef EGFRDSimulator::spherical_pair_type SphericalPair;
+typedef EGFRDSimulator::cylindrical_pair_type CylindricalPair;
+typedef EGFRDSimulator::multi_type Multi;
 
 void register_domain_classes()
 {

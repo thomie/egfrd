@@ -28,7 +28,6 @@
 #include "peer/numpy/scalar_converters.hpp"
 
 #include "binding/bd_propagator_class.hpp"
-#include "binding/binding_common.hpp"
 #include "binding/box_class.hpp"
 #include "binding/cylinder_class.hpp"
 #include "binding/domain_id_class.hpp"
@@ -62,6 +61,10 @@
 #include "binding/transaction_classes.hpp"
 #include "binding/world_class.hpp"
 
+#include "binding/binding_common_WorldTraits.hpp"
+namespace binding {
+    typedef WorldTraits::length_type Length;
+} // namespace binding
 namespace b = binding;
 
 BOOST_PYTHON_MODULE(_gfrd)

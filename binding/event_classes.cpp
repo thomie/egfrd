@@ -1,14 +1,15 @@
+#include "binding_common_EGFRDSimulatorTraits.hpp"
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif /* HAVE_CONFIG_H */
 
-#include "binding_common.hpp"
 #include "Event.hpp"
 #include "PythonEvent.hpp"
 #include "EventScheduler.hpp"
+#include "../EventScheduler.hpp"
 
 namespace binding {
-
 typedef EventScheduler<EGFRDSimulatorTraits::time_type> EventSchedulerImpl;
 
 class PythonEvent: public EventSchedulerImpl::Event

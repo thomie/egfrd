@@ -6,9 +6,10 @@
 #include <boost/date_time/posix_time/conversion.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include "peer/util/to_native_converter.hpp"
-#include "binding_common.hpp"
+#include "../Logger.hpp"
 
 namespace binding {
+typedef ::LogAppender LogAppender;
 
 static boost::python::object datetime_module;
 

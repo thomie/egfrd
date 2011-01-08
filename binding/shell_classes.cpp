@@ -1,11 +1,14 @@
+#include "binding_common_EGFRDSimulator.hpp"
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif /* HAVE_CONFIG_H */
 
 #include "Shell.hpp"
-#include "binding_common.hpp"
 
 namespace binding {
+typedef EGFRDSimulator::spherical_shell_type SphericalShell;
+typedef EGFRDSimulator::cylindrical_shell_type CylindricalShell;
 
 void register_spherical_shell_class()
 {

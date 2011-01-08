@@ -1,11 +1,14 @@
+#include "binding_common_EGFRDSimulator.hpp"
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif /* HAVE_CONFIG_H */
 
+#include "../Cylinder.hpp"
 #include "Cylinder.hpp"
-#include "binding_common.hpp"
 
 namespace binding {
+typedef EGFRDSimulator::cylinder_type Cylinder;
 
 void register_cylinder_class()
 {
