@@ -1,7 +1,7 @@
 #ifndef BINDING_COMMON_WORLD_TRAITS
 #define BINDING_COMMON_WORLD_TRAITS
 
-#include "../World.hpp"
+#include "../WorldTraits.hpp"
 
 namespace binding {
 
