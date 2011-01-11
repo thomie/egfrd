@@ -6,7 +6,21 @@ noinst_LTLIBRARIES = libbinding_utils.la
 # FLAGS and LIBS
 AM_CPPFLAGS = @PYTHON_INCLUDES@ -I@NUMPY_INCLUDE_DIR@ @BOOST_CPPFLAGS@ -DNO_IMPORT 
 
-AM_CXXFLAGS = @GSL_CFLAGS@
+AM_CXXFLAGS = @GSL_CFLAGS@ -Winvalid-pch 
+
+
+# PRECOMPILED HEADERS
+PCH_FLAGS = -m128bit-long-double -maccumulate-outgoing-args -fPIC
+
+SUFFIXES: hpp gch
+.hpp.gch:
+	$(CXXCOMPILE) -c $(PCH_FLAGS) -DNO_IMPORT $<
+
+BUILT_SOURCES = \
+	binding_common_WorldTraits.gch\
+	binding_common_World.gch\
+	binding_common_EGFRDSimulatorTraits.gch\
+	binding_common_EGFRDSimulator.gch
 
 
 # SOURCES
@@ -56,3 +70,5 @@ libbinding_utils_la_SOURCES = \
 noinst_HEADERS = *.hpp
 
 
+# CLEAN
+CLEANFILES = *.gch
