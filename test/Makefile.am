@@ -6,7 +6,7 @@ check_PROGRAMS = $(CPP_TESTS)
 # FLAGS and LIBS
 AM_CPPFLAGS = @PYTHON_INCLUDES@ -I@NUMPY_INCLUDE_DIR@ @BOOST_CPPFLAGS@
 
-AM_CXXFLAGS = @GSL_CFLAGS@
+AM_CXXFLAGS = @GSL_CFLAGS@ -I$(top_srcdir)
 
 BDPropagator_test_LDADD = ../BasicNetworkRulesImpl.lo ../NetworkRules.lo ../Logger.lo ../ConsoleAppender.lo ../freeFunctions.lo $(GSL_LIBS)
 
@@ -71,7 +71,7 @@ PYTHON_TESTS = \
 	SphericalShellContainer_test.py \
 	utils_test.py
 
-TESTS_ENVIRONMENT = PYTHONPATH=$(top_srcdir)
+TESTS_ENVIRONMENT = PYTHONPATH=$(top_srcdir):$(top_builddir)
 
 #%.py:
 #	$(TESTS_ENVIRONMENT) @PYTHON@ $<

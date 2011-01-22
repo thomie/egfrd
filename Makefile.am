@@ -4,15 +4,18 @@ SUBDIRS = doc binding test
 # BESSEL TABLES
 # Built the Bessel tables before they are needed
 # Manually recording dependencies instead of using BUILT_SOURCES is faster
-SphericalBesselGenerator.lo : SphericalBesselTable.hpp
+BUILT_SOURCES = \
+	SphericalBesselTable.hpp\
+	CylindricalBesselTable.hpp
+#SphericalBesselGenerator.lo : SphericalBesselTable.hpp
 
 SphericalBesselTable.hpp: make_sjy_table.py
-	@PYTHON@ make_sjy_table.py SphericalBesselTable.hpp
+	@PYTHON@ $(top_srcdir)/make_sjy_table.py SphericalBesselTable.hpp
 
-CylindricalBesselGenerator.lo : CylindricalBesselTable.hpp
+#CylindricalBesselGenerator.lo : CylindricalBesselTable.hpp
 
 CylindricalBesselTable.hpp: make_cjy_table.py
-	@PYTHON@ make_cjy_table.py CylindricalBesselTable.hpp
+	@PYTHON@ $(top_srcdir)/make_cjy_table.py CylindricalBesselTable.hpp
 
 
 # BUILT
@@ -145,22 +148,159 @@ dist_pkgpython_DATA = \
 
 # The only reason to list the headers is for distribution.
 nobase_noinst_HEADERS = \
-	*.hpp\
+	abstract_set.hpp\
+	AnalyticalPair.hpp\
+	AnalyticalSingle.hpp\
+	BasicNetworkRulesImpl.hpp\
+	BasicReactionRecorderImpl.hpp\
+	BDPropagator.hpp\
+	BDSimulator.hpp\
+	bessel.hpp\
+	Box.hpp\
+	ConsoleAppender.hpp\
+	CuboidalRegion.hpp\
+	Cylinder.hpp\
+	CylindricalBesselGenerator.hpp\
+	CylindricalSurface.hpp\
+	Defs.hpp\
+	DomainFactory.hpp\
+	Domain.hpp\
+	DomainID.hpp\
+	DomainUtils.hpp\
+	DynamicPriorityQueue.hpp\
+	EGFRDSimulatorFactory.hpp\
+	EGFRDSimulator.hpp\
+	EGFRDSimulatorTraits.hpp\
+	EventScheduler.hpp\
+	exceptions.hpp\
+	factorial.hpp\
+	filters.hpp\
+	findRoot.hpp\
+	freeFunctions.hpp\
+	funcSum.hpp\
+	generator.hpp\
+	geometry.hpp\
+	GreensFunction1DAbsAbs.hpp\
+	GreensFunction1DRadAbs.hpp\
+	GreensFunction3DAbs.hpp\
+	GreensFunction3DAbsSym.hpp\
+	GreensFunction3D.hpp\
+	GreensFunction3DRadAbsBase.hpp\
+	GreensFunction3DRadAbs.hpp\
+	GreensFunction3DRadInf.hpp\
+	GreensFunction3DSym.hpp\
+	GreensFunction.hpp\
+	GSLRandomNumberGenerator.hpp\
+	gsl_rng_base.hpp\
+	HalfOrderBesselGenerator.hpp\
+	Identifier.hpp\
+	linear_algebra.hpp\
+	Logger.hpp\
+	MatrixSpace.hpp\
+	Model.hpp\
+	Multi.hpp\
+	NetworkRules.hpp\
+	NetworkRulesWrapper.hpp\
+	OldDefs.hpp\
+	PairGreensFunction.hpp\
+	Pair.hpp\
+	ParticleContainerBase.hpp\
+	ParticleContainer.hpp\
+	Particle.hpp\
+	ParticleID.hpp\
+	ParticleModel.hpp\
+	ParticleSimulationStructure.hpp\
+	ParticleSimulatorFactory.hpp\
+	ParticleSimulator.hpp\
+	PlanarSurface.hpp\
+	Plane.hpp\
+	Point.hpp\
+	PyEventScheduler.hpp\
+	ReactionRecorder.hpp\
+	ReactionRecord.hpp\
+	ReactionRule.hpp\
+	ReactionRuleInfo.hpp\
+	Region.hpp\
+	SerialIDGenerator.hpp\
+	ShapedDomain.hpp\
+	Shape.hpp\
+	Shell.hpp\
+	ShellID.hpp\
+	Single.hpp\
+	sorted_list.hpp\
+	SpeciesInfo.hpp\
+	SpeciesType.hpp\
+	SpeciesTypeID.hpp\
+	Sphere.hpp\
+	SphericalBesselGenerator.hpp\
+	SphericalSurface.hpp\
+	Structure.hpp\
+	StructureType.hpp\
+	StructureUtils.hpp\
+	Surface.hpp\
+	Transaction.hpp\
+	twofold_container.hpp\
+	utils.hpp\
+	Vector3.hpp\
+	World.hpp\
+	WorldTraits.hpp\
 	compat.h\
+	peer/py_hash_support.hpp\
+	peer/util/to_python_converter_fun.hpp\
+	peer/util/shared_const_ptr.hpp\
+	peer/util/exception_translators.hpp\
+	peer/util/reference_accessor_wrapper.hpp\
+	peer/util/instance_holder.hpp\
+	peer/util/to_native_converter.hpp\
+	peer/util/range_from_range.hpp\
+	peer/converters/iterator.hpp\
+	peer/converters/tuple/to_python.hpp\
+	peer/converters/tuple/from_python.hpp\
+	peer/converters/generator/to_python.hpp\
+	peer/converters/generator/from_python.hpp\
+	peer/converters/iterator/to_python.hpp\
+	peer/converters/tuple.hpp\
+	peer/converters/sequence.hpp\
+	peer/converters/sequence/to_python.hpp\
+	peer/converters/sequence/from_python.hpp\
+	peer/utils.hpp\
+	peer/numpy/ndarray_converters.hpp\
+	peer/numpy/scalar_converters.hpp\
+	peer/numpy/type_mappings.hpp\
+	peer/numpy/pyarray_backed_allocator.hpp\
+	peer/numpy/wrapped_multi_array.hpp\
+	peer/set_indexing_suite.hpp\
+	peer/wrappers/generator/pyiterator_generator.hpp\
+	peer/wrappers/generator/generator_wrapper.hpp\
+	peer/wrappers/iterator/stl_iterator_wrapper.hpp\
+	peer/wrappers/iterator/pyseq_iterator.hpp\
+	peer/wrappers/range/pyiterable_range.hpp\
+	peer/wrappers/range/stl_container_wrapper.hpp\
+	peer/wrappers/exception/exception_wrapper.hpp\
+	peer/pickle_support.hpp\
 	peer/compat.h\
-	peer/converters/generator/*.hpp\
-	peer/converters/*.hpp\
-	peer/converters/iterator/*.hpp\
-	peer/converters/sequence/*.hpp\
-	peer/converters/tuple/*.hpp\
-	peer/*.hpp\
-	peer/numpy/*.hpp\
-	peer/util/*.hpp\
-	peer/wrappers/exception/*.hpp\
-	peer/wrappers/generator/*.hpp\
-	peer/wrappers/iterator/*.hpp\
-	peer/wrappers/range/*.hpp\
-	utils/*.hpp
+	utils/array_helper.hpp\
+	utils/array_traits.hpp\
+	utils/assoc_container_traits.hpp\
+	utils/base_type_walker.hpp\
+	utils/fun_composition.hpp\
+	utils/fun_wrappers.hpp\
+	utils/get_default_impl.hpp\
+	utils/get_mapper_mf.hpp\
+	utils/map_adapter.hpp\
+	utils/math.hpp\
+	utils/memberwise_compare.hpp\
+	utils/pair.hpp\
+	utils/pointer_as_ref.hpp\
+	utils/pointer_preds.hpp\
+	utils/random.hpp\
+	utils/range.hpp\
+	utils/range_support.hpp\
+	utils/reference_or_instance.hpp\
+	utils/reset.hpp\
+	utils/stringizer.hpp\
+	utils/swap.hpp\
+	utils/unassignable_adapter.hpp
 
 EXTRA_DIST = \
 	autogen.sh\
