@@ -1,0 +1,23 @@
+Now:
+- Reject multi try when particle hits surface
+- interactions
+  * up to form_interaction
+  * form & create interaction
+  * single.py additions
+  * interaction handling
+
+Soon:
+- Add documentation: it is possible to add reaction rules to the network 
+  after the model has been added to the world.
+
+Later:
+- Rename CuboidalRegion to BoxShapedRegion
+- Use hdf5 for VTKlogger
+
+Open problems:
+- kD in 1D and 2D
+
+Done (latest first):
+- multis not contiguous
+- MINIMAL DISTANCE is not correct
+- Add tests for ParaView visualization

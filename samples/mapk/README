@@ -1,0 +1,13 @@
+
+=== Difference between model 3 and model 4
+
+model 3
+* N = 180 (only for matrix_size)
+* N_K = C2N(200e-9, V)
+* N_Kpp = 0 (start completely unphosphorelated)
+
+model 4
+* N = 300 (only for matrix_size)
+* N_Kpp = N_K_total * Kpp_ratio
+* N_K = N_K_total - N_Kpp
+
